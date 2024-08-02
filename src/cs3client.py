@@ -3,7 +3,7 @@ cs3client.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 29/07/2024
+Last updated: 01/08/2024
 """
 
 import grpc
@@ -13,6 +13,7 @@ import cs3.gateway.v1beta1.gateway_api_pb2_grpc as cs3gw_grpc
 from configparser import ConfigParser
 from auth import Auth
 from file import File
+from user import User
 from config import Config
 
 
@@ -41,6 +42,7 @@ class CS3Client:
         self._gateway: cs3gw_grpc.GatewayAPIStub = cs3gw_grpc.GatewayAPIStub(self.channel)
         self.auth = Auth(self._config, self._log, self._gateway)
         self.file = File(self._config, self._log, self._gateway, self.auth)
+        self.user = User(self._config, self._log, self._gateway, self.auth)
 
     def _create_channel(self) -> grpc.Channel:
         """

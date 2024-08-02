@@ -3,10 +3,9 @@ auth.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 29/07/2024
+Last updated: 01/08/2024
 """
 
-from typing import List
 import grpc
 import jwt
 import datetime
@@ -76,7 +75,7 @@ class Auth:
             # Check that client secret or token is set
             if not self._client_secret and not self._token:
                 self._log.error("Attempted to authenticate, neither client secret or token was set.")
-                raise SecretNotSetException("")
+                raise SecretNotSetException("The client secret (e.g. token, passowrd) is not set")
             elif not self._client_secret and self._token:
                 # Case where ONLY a token is provided but it has expired
                 self._log.error("The provided token have expired")
@@ -100,7 +99,7 @@ class Auth:
             self._token = res.token
         return ("x-access-token", self._token)
 
-    def list_auth_providers(self) -> List[str]:
+    def list_auth_providers(self) -> list[str]:
         """
         list authentication providers
 
