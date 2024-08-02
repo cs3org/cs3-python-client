@@ -5,7 +5,7 @@ Custom exception classes for the CS3 client.
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 29/07/2024
+Last updated: 01/08/2024
 """
 
 
@@ -15,7 +15,7 @@ class AuthenticationException(Exception):
     """
 
     def __init__(self, message: str = ""):
-        super().__init__("Operation not permitted" + " " + message)
+        super().__init__(message)
 
 
 class NotFoundException(IOError):
@@ -24,7 +24,7 @@ class NotFoundException(IOError):
     """
 
     def __init__(self, message: str = ""):
-        super().__init__("No such file or directory" + " " + message)
+        super().__init__(message)
 
 
 class SecretNotSetException(Exception):
@@ -33,17 +33,17 @@ class SecretNotSetException(Exception):
     """
 
     def __init__(self, message: str = ""):
-        super().__init__("The client secret (e.g. token, passowrd) is not set" + " " + message)
+        super().__init__(message)
 
 
 class FileLockedException(IOError):
     """
-    Standard error thrown when attempting to overwrite a file/xattr in O_EXCL mode
-    or when a lock operation cannot be performed because of failed preconditions
+    Standard error thrown when attempting to overwrite a file/xattr or when
+    a lock operation cannot be performed because of failed preconditions
     """
 
     def __init__(self, message: str = ""):
-        super().__init__("File/xattr exists but EXCL mode requested, lock mismatch or lock expired" + " " + message)
+        super().__init__(message)
 
 
 class UnknownException(Exception):

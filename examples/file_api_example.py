@@ -1,5 +1,5 @@
 """
-example.py
+file_api_example.py
 
 Example script to demonstrate the usage of the CS3Client class.
 Start with an empty directory and you should end up with a directory structure like this:
@@ -13,7 +13,7 @@ text_file.txt
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 29/07/2024
+Last updated: 01/08/2024
 """
 
 import logging
@@ -28,7 +28,9 @@ with open("default.conf") as fdef:
 log = logging.getLogger(__name__)
 
 client = CS3Client(config, "cs3client", log)
-client.auth.set_client_secret("relativity")
+client.auth.set_token("<your_token_here>")
+# OR
+# client.auth.set_client_secret("<your_client_secret_here>")
 
 # Authentication
 print(client.auth.get_token())

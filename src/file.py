@@ -3,7 +3,7 @@ file.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 29/07/2024
+Last updated: 02/08/2024
 """
 
 import time
@@ -47,41 +47,40 @@ class File:
     def _log_precondition_info(self, resource: Resource, res: any, operation: str) -> None:
         self._log.info(
             f'msg="Failed precondition on {operation}" {resource.get_file_ref_str()} '
-            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}"'
+            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}" '
             f'reason="{res.status.message.replace('"', "'")}"'
         )
 
     def _log_authentication_error(self, resource: Resource, res: any, operation: str) -> None:
         self._log.error(
             f'msg="Authentication failed on {operation}" {resource.get_file_ref_str()} '
-            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}"'
+            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}" '
             f'reason="{res.status.message.replace('"', "'")}"'
         )
 
     def _log_unknown_error(self, resource: Resource, res: any, operation: str) -> None:
         self._log.error(
             f'msg="Failed to {operation}, unknown error" {resource.get_file_ref_str()} '
-            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}"'
+            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}" '
             f'reason="{res.status.message.replace('"', "'")}"'
         )
 
-    def _handle_errors(self, resource: Resource, res: any, operation: str, msg: str = "") -> None:
+    def _handle_errors(self, resource: Resource, res: any, operation: str) -> None:
         if res.status.code == cs3code.CODE_NOT_FOUND:
             self._log_not_found_info(resource, res, operation)
-            self._log.info(f'msg="Invoked {operation} on missing file" {resource.get_file_ref_str()}')
-            raise NotFoundException(message=msg)
+            raise NotFoundException(message=f"No such file or directory: {res.status.message}")
         if res.status.code in [cs3code.CODE_FAILED_PRECONDITION, cs3code.CODE_ABORTED]:
             self._log_precondition_info(resource, res, operation)
-            raise FileLockedException(message=msg)
+            raise FileLockedException(message=f"Lock mismatch or lock expired:  {res.status.message}")
         if res.status.code == cs3code.CODE_UNAUTHENTICATED:
             self._log_authentication_error(resource, res, operation)
-            raise AuthenticationException(message=msg)
+            raise AuthenticationException(message=f"Operation not permitted:  {res.status.message}")
         if res.status.code != cs3code.CODE_OK:
             if "path not found" in str(res):
                 self._log.info(f'msg="Invoked {operation} on missing file" {resource.get_file_ref_str()}')
-                raise NotFoundException(message=msg)
+                raise NotFoundException(message=f"No such file or directory:  {res.status.message}")
             self._log_unknown_error(resource, res, operation)
-            raise UnknownException(res.status.message)
+            raise UnknownException(message=f"Unknown error:  {res.status.message}")
 
     def stat(self, resource: Resource) -> cs3spr.ResourceInfo:
         """
@@ -154,7 +153,7 @@ class File:
         """
         req = cs3sp.MoveRequest(source=resource.ref, destination=newresource.ref)
         res = self._gateway.Move(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "rename_file")
+        self._handle_errors(resource, res, "rename file")
         self._log.debug(f'msg="Invoked renamefile" result="{res}"')
 
     def remove_file(self, resource: Resource) -> None:
@@ -254,10 +253,10 @@ class File:
             self._log.info(
                 f'msg="Got conflict on PUT, file is locked" reason="{putres.reason}" {resource.get_file_ref_str()}'
             )
-            raise FileLockedException()
+            raise FileLockedException(f"Lock mismatch or lock expired: {putres.reason}")
         if putres.status_code == http.client.UNAUTHORIZED:
             self._log_authentication_error(resource, putres, "write")
-            raise AuthenticationException()
+            raise AuthenticationException(f"Operation not permitted: {putres.reason}")
         if putres.status_code != http.client.OK:
             if (
                 size == 0

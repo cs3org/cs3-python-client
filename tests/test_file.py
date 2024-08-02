@@ -17,13 +17,10 @@ from exceptions.exceptions import (
 )
 import cs3.rpc.v1beta1.code_pb2 as cs3code
 from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
-    cs3_client_insecure,
-    cs3_client_secure,
     mock_config,
     mock_logger,
     mock_authentication,
     mock_gateway,
-    create_mock_jwt,
     file_instance,
 )
 from unittest.mock import Mock, patch
@@ -48,6 +45,7 @@ def test_stat_not_found(file_instance):  # noqa: F811 (not a redefinition)
     resource = Resource.from_file_ref_and_endpoint(endpoint="", file="testfile")
     mock_response = Mock()
     mock_response.status.code = cs3code.CODE_NOT_FOUND
+    mock_response.status.message = "Resource not found"
 
     with patch.object(file_instance._gateway, "Stat", return_value=mock_response):
         with pytest.raises(NotFoundException):
@@ -522,6 +520,7 @@ def test_readfile_not_found(file_instance):  # noqa: F811 (not a redefinition)
     mock_fileget_response = Mock()
     mock_fileget_response.status.code = cs3code.CODE_NOT_FOUND
     mock_fileget_response.iter_content = Mock(return_value="None")
+    mock_fileget_response.status.message = "File not found"
 
     with patch.object(
         file_instance._gateway,

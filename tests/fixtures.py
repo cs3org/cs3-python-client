@@ -16,6 +16,7 @@ import cs3.rpc.v1beta1.code_pb2 as cs3code
 from cs3client import CS3Client
 from file import File
 from auth import Auth
+from user import User
 from config import Config
 import base64
 import json
@@ -157,3 +158,9 @@ def cs3_client_insecure(
 def file_instance(mock_authentication, mock_gateway, mock_config, mock_logger):
     file = File(Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication)
     return file
+
+
+@pytest.fixture
+def user_instance(mock_authentication, mock_gateway, mock_config, mock_logger):
+    user = User(Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication)
+    return user
