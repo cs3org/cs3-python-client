@@ -3,7 +3,7 @@ cs3resource.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 29/07/2024
+Last updated: 19/08/2024
 """
 
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
@@ -94,7 +94,7 @@ class Resource:
         absolute path, relative hybrid path, fully opaque fileid.
 
         :return: The cs3 reference.
-                 May throw ValueError (Invalid Resource)
+        :raises: ValueError (Invalid Resource)
         """
         if self._abs_path:
             return cs3spr.Reference(path=self._abs_path)
@@ -123,7 +123,7 @@ class Resource:
         Recreates the endpoint and file reference from the given resource
 
         :return: (dict) {"file": fileref, "endpoint": endpoint}
-                 May throw ValueError (invalid resource)
+        :raises: ValueError (invalid resource)
         """
         endpoint = self._storage_id
         if self._space_id:
@@ -139,11 +139,11 @@ class Resource:
     @classmethod
     def from_cs3_ref(cls, reference: cs3spr.Reference) -> "Resource":
         """
-        Alternate constructor that reverses a CS3 reference to obtain a resource.ß
+        Alternate constructor that reverses a CS3 reference to obtain a resource.
 
         :param reference: The CS3 reference.
         :return: Resource object.
-                 May throw ValueError (Invalid reference)
+        :raises: ValueError (Invalid reference)
         """
         rel_path = None
         opaque_id = None
@@ -161,7 +161,7 @@ class Resource:
             if reference.path and len(reference.path) > 1:
                 # It's a relative path (remove the "." in the relative path)
                 rel_path = reference.path[1:]
-                # The opaque_id is a parent id since it's a relative pathß
+                # The opaque_id is a parent id since it's a relative path
                 parent_id = reference.resource_id.opaque_id
             else:
                 opaque_id = reference.resource_id.opaque_id

@@ -38,8 +38,8 @@ class SecretNotSetException(Exception):
 
 class FileLockedException(IOError):
     """
-    Standard error thrown when attempting to overwrite a file/xattr or when
-    a lock operation cannot be performed because of failed preconditions
+    Standard error thrown when attempting to overwrite a file/xattr with a mistmatched lock,
+    or when a lock operation cannot be performed because of failed preconditions
     """
 
     def __init__(self, message: str = ""):
@@ -49,6 +49,15 @@ class FileLockedException(IOError):
 class UnknownException(Exception):
     """
     Standard exception to be thrown when we get an error that is unknown, e.g. not defined in the cs3api
+    """
+
+    def __init__(self, message: str = ""):
+        super().__init__(message)
+
+
+class AlreadyExistsException(IOError):
+    """
+    Standard error thrown when attempting to create a resource that already exists
     """
 
     def __init__(self, message: str = ""):

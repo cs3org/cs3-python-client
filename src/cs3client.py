@@ -3,7 +3,7 @@ cs3client.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 01/08/2024
+Last updated: 19/08/2024
 """
 
 import grpc
@@ -14,6 +14,10 @@ from configparser import ConfigParser
 from auth import Auth
 from file import File
 from user import User
+from share import Share
+from statuscodehandler import StatusCodeHandler
+from app import App
+from checkpoint import Checkpoint
 from config import Config
 
 
@@ -39,10 +43,17 @@ class CS3Client:
         except grpc.FutureTimeoutError as e:
             log.error(f'msg="Failed to connect to Reva via GRPC" error="{e}"')
             raise TimeoutError("Failed to connect to Reva via GRPC")
+
         self._gateway: cs3gw_grpc.GatewayAPIStub = cs3gw_grpc.GatewayAPIStub(self.channel)
-        self.auth = Auth(self._config, self._log, self._gateway)
-        self.file = File(self._config, self._log, self._gateway, self.auth)
-        self.user = User(self._config, self._log, self._gateway, self.auth)
+        self._status_code_handler: StatusCodeHandler = StatusCodeHandler(self._log, self._config)
+        self.auth: Auth = Auth(self._config, self._log, self._gateway)
+        self.file: File = File(self._config, self._log, self._gateway, self.auth, self._status_code_handler)
+        self.user: User = User(self._config, self._log, self._gateway, self.auth, self._status_code_handler)
+        self.app: App = App(self._config, self._log, self._gateway, self.auth, self._status_code_handler)
+        self.checkpoint: Checkpoint = Checkpoint(
+            self._config, self._log, self._gateway, self.auth, self._status_code_handler
+        )
+        self.share = Share(self._config, self._log, self._gateway, self.auth, self._status_code_handler)
 
     def _create_channel(self) -> grpc.Channel:
         """
