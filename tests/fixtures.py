@@ -5,7 +5,7 @@ Contains the fixtures used in the tests.
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 26/07/2024
+Last updated: 19/08/2024
 
 """
 
@@ -17,6 +17,10 @@ from cs3client import CS3Client
 from file import File
 from auth import Auth
 from user import User
+from statuscodehandler import StatusCodeHandler
+from share import Share
+from app import App
+from checkpoint import Checkpoint
 from config import Config
 import base64
 import json
@@ -63,7 +67,17 @@ def create_mock_jwt():
 
 @pytest.fixture
 def mock_logger():
-    return Mock()
+    logger = Mock()
+    logger.info = Mock()
+    logger.error = Mock()
+    logger.debug = Mock()
+    logger.warning = Mock()
+    return logger
+
+
+@pytest.fixture
+def mock_status_code_handler(mock_logger, mock_config):
+    return StatusCodeHandler(mock_logger, Config(mock_config, "cs3client"))
 
 
 # Here the order of patches correspond to the parameters of the function
@@ -153,14 +167,46 @@ def cs3_client_insecure(
     return client
 
 
+@pytest.fixture
+def app_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+    app = App(
+        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication, mock_status_code_handler
+    )
+    return app
+
+
+@pytest.fixture
+def checkpoint_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+    checkpoint = Checkpoint(
+        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication, mock_status_code_handler
+    )
+    return checkpoint
+
+
+@pytest.fixture
+def share_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+    share = Share(
+        Config(mock_config, "cs3client"),
+        mock_logger,
+        mock_gateway,
+        mock_authentication,
+        mock_status_code_handler,
+    )
+    return share
+
+
 # All parameters are inferred by pytest from existing fixtures
 @pytest.fixture
-def file_instance(mock_authentication, mock_gateway, mock_config, mock_logger):
-    file = File(Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication)
+def file_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+    file = File(
+        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication, mock_status_code_handler
+    )
     return file
 
 
 @pytest.fixture
-def user_instance(mock_authentication, mock_gateway, mock_config, mock_logger):
-    user = User(Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication)
+def user_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+    user = User(
+        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication, mock_status_code_handler
+    )
     return user
