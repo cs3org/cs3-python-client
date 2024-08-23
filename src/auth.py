@@ -3,14 +3,14 @@ auth.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 01/08/2024
+Last updated: 19/08/2024
 """
 
 import grpc
 import jwt
 import datetime
 import logging
-import cs3.gateway.v1beta1.gateway_api_pb2 as gw
+from cs3.gateway.v1beta1.gateway_api_pb2 import AuthenticateRequest
 from cs3.auth.registry.v1beta1.registry_api_pb2 import ListAuthProvidersRequest
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 from cs3.rpc.v1beta1.code_pb2 import CODE_OK
@@ -67,8 +67,8 @@ class Auth:
         the credentials have expired.
 
         :return tuple: A tuple containing the header key and the token.
-                       May throw AuthenticationException (token expired, or failed to authenticate)
-                       or SecretNotSetException (neither token or client secret was set).
+        :raises: AuthenticationException (token expired, or failed to authenticate)
+        :raises: SecretNotSetException (neither token or client secret was set)
         """
 
         if not Auth._check_token(self._token):
@@ -81,7 +81,7 @@ class Auth:
                 self._log.error("The provided token have expired")
                 raise AuthenticationException("The credentials have expired")
             # Create an authentication request
-            req = gw.AuthenticateRequest(
+            req = AuthenticateRequest(
                 type=self._config.auth_login_type,
                 client_id=self._config.auth_client_id,
                 client_secret=self._client_secret,
@@ -90,13 +90,12 @@ class Auth:
             res = self._gateway.Authenticate(req)
 
             if res.status.code != CODE_OK:
-                self._log.error(
-                    f"Failed to authenticate user {self._config.auth_client_id}, error: {res.status.message}"
-                )
+                self._log.error(f"Failed to authenticate user {self._config.auth_client_id}, error: {res.status}")
                 raise AuthenticationException(
-                    f"Failed to authenticate user {self._config.auth_client_id}, error: {res.status.message}"
+                    f"Failed to authenticate user {self._config.auth_client_id}, error: {res.status}"
                 )
             self._token = res.token
+        self._log.debug(f'msg="Authenticated user" user="{self._config.auth_client_id}"')
         return ("x-access-token", self._token)
 
     def list_auth_providers(self) -> list[str]:
@@ -104,12 +103,12 @@ class Auth:
         list authentication providers
 
         :return: a list of the supported authentication types
-                 May return ConnectionError (Could not connect to host)
+        :raises: ConnectionError (Could not connect to host)
         """
         try:
             res = self._gateway.ListAuthProviders(request=ListAuthProvidersRequest())
             if res.status.code != CODE_OK:
-                self._log.error(f"List auth providers request failed, error: {res.status.message}")
+                self._log.error(f"List auth providers request failed, error: {res.status}")
                 raise Exception(res.status.message)
         except grpc.RpcError as e:
             self._log.error("List auth providers request failed")

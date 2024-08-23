@@ -3,7 +3,7 @@ file.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 02/08/2024
+Last updated: 19/08/2024
 """
 
 import time
@@ -13,14 +13,14 @@ import requests
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 import cs3.storage.provider.v1beta1.provider_api_pb2 as cs3sp
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
-import cs3.rpc.v1beta1.code_pb2 as cs3code
 import cs3.types.v1beta1.types_pb2 as types
 
 from config import Config
 from typing import Generator
-from exceptions.exceptions import AuthenticationException, FileLockedException, NotFoundException, UnknownException
+from exceptions.exceptions import AuthenticationException, FileLockedException
 from cs3resource import Resource
 from auth import Auth
+from statuscodehandler import StatusCodeHandler
 
 
 class File:
@@ -28,59 +28,24 @@ class File:
     File class to interact with the CS3 API.
     """
 
-    def __init__(self, config: Config, log: logging.Logger, gateway: GatewayAPIStub, auth: Auth) -> None:
+    def __init__(
+            self, config: Config, log: logging.Logger, gateway: GatewayAPIStub, auth: Auth,
+            status_code_handler: StatusCodeHandler
+    ) -> None:
+        """
+        Initializes the File class with configuration, logger, auth, gateway stub, and status code handler.
+
+        :param config: Config object containing the configuration parameters.
+        :param log: Logger instance for logging.
+        :param gateway: GatewayAPIStub instance for interacting with CS3 Gateway.
+        :param auth: An instance of the auth class.
+        :param status_code_handler: An instance of the StatusCodeHandler class.
+        """
         self._auth: Auth = auth
         self._config: Config = config
         self._log: logging.Logger = log
         self._gateway: GatewayAPIStub = gateway
-
-    # Note that res is of type any because it can be different types of respones
-    # depending on the method that calls this function, I do not think importing
-    # all the possible response types is a good idea
-    def _log_not_found_info(self, resource: Resource, res: any, operation: str) -> None:
-        self._log.info(
-            f'msg="File not found on {operation}" {resource.get_file_ref_str()} '
-            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}" '
-            f'reason="{res.status.message.replace('"', "'")}"'
-        )
-
-    def _log_precondition_info(self, resource: Resource, res: any, operation: str) -> None:
-        self._log.info(
-            f'msg="Failed precondition on {operation}" {resource.get_file_ref_str()} '
-            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}" '
-            f'reason="{res.status.message.replace('"', "'")}"'
-        )
-
-    def _log_authentication_error(self, resource: Resource, res: any, operation: str) -> None:
-        self._log.error(
-            f'msg="Authentication failed on {operation}" {resource.get_file_ref_str()} '
-            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}" '
-            f'reason="{res.status.message.replace('"', "'")}"'
-        )
-
-    def _log_unknown_error(self, resource: Resource, res: any, operation: str) -> None:
-        self._log.error(
-            f'msg="Failed to {operation}, unknown error" {resource.get_file_ref_str()} '
-            f'userid="{self._config.auth_client_id}" trace="{res.status.trace}" '
-            f'reason="{res.status.message.replace('"', "'")}"'
-        )
-
-    def _handle_errors(self, resource: Resource, res: any, operation: str) -> None:
-        if res.status.code == cs3code.CODE_NOT_FOUND:
-            self._log_not_found_info(resource, res, operation)
-            raise NotFoundException(message=f"No such file or directory: {res.status.message}")
-        if res.status.code in [cs3code.CODE_FAILED_PRECONDITION, cs3code.CODE_ABORTED]:
-            self._log_precondition_info(resource, res, operation)
-            raise FileLockedException(message=f"Lock mismatch or lock expired:  {res.status.message}")
-        if res.status.code == cs3code.CODE_UNAUTHENTICATED:
-            self._log_authentication_error(resource, res, operation)
-            raise AuthenticationException(message=f"Operation not permitted:  {res.status.message}")
-        if res.status.code != cs3code.CODE_OK:
-            if "path not found" in str(res):
-                self._log.info(f'msg="Invoked {operation} on missing file" {resource.get_file_ref_str()}')
-                raise NotFoundException(message=f"No such file or directory:  {res.status.message}")
-            self._log_unknown_error(resource, res, operation)
-            raise UnknownException(message=f"Unknown error:  {res.status.message}")
+        self._status_code_handler: StatusCodeHandler = status_code_handler
 
     def stat(self, resource: Resource) -> cs3spr.ResourceInfo:
         """
@@ -88,17 +53,18 @@ class File:
 
         :param resource: resource to stat.
         :return: cs3.storage.provider.v1beta1.resources_pb2.ResourceInfo (success)
-                  NotFoundException (File not found),
-                  AuthenticationException (Authentication Failed),
-                  or UnknownException (Unknown Error).
+        :raises: NotFoundException (File not found)
+        :raises: AuthenticationException (Authentication Failed)
+        :raises: UnknownException (Unknown Error)
 
         """
         tstart = time.time()
         res = self._gateway.Stat(request=cs3sp.StatRequest(ref=resource.ref), metadata=[self._auth.get_token()])
         tend = time.time()
-        self._handle_errors(resource, res, "stat")
-        self._log.debug(
-            f'msg="Invoked Stat" {resource.get_file_ref_str()} elapsedTimems="{(tend - tstart) * 1000:.1f}"'
+        self._status_code_handler.handle_errors(res.status, "stat", resource.get_file_ref_str())
+        self._log.info(
+            f'msg="Invoked Stat" fileref="{resource.ref}" {resource.get_file_ref_str()}  trace="{res.status.trace}" '
+            f'elapsedTimems="{(tend - tstart) * 1000:.1f}"'
         )
         return res.info
 
@@ -110,9 +76,9 @@ class File:
         :param key: attribute key.
         :param value: value to set.
         :return: None (Success)
-                 May return FileLockedException (File is locked),
-                 AuthenticationException (Authentication Failed),
-                 or UnknownException (Unknown error).
+        :raises: FileLockedException (File is locked)
+        :raises: AuthenticationException (Authentication Failed)
+        :raises: UnknownException (Unknown error)
         """
         md = cs3spr.ArbitraryMetadata()
         md.metadata.update({key: value})  # pylint: disable=no-member
@@ -120,8 +86,8 @@ class File:
         res = self._gateway.SetArbitraryMetadata(request=req, metadata=[self._auth.get_token()])
         # CS3 storages may refuse to set an xattr in case of lock mismatch: this is an overprotection,
         # as the lock should concern the file's content, not its metadata, however we need to handle that
-        self._handle_errors(resource, res, "set extended attribute")
-        self._log.debug(f'msg="Invoked setxattr" result="{res}"')
+        self._status_code_handler.handle_errors(res.status, "set extended attribute", resource.get_file_ref_str())
+        self._log.debug(f'msg="Invoked setxattr" trace="{res.status.trace}"')
 
     def remove_xattr(self, resource: Resource, key: str) -> None:
         """
@@ -130,14 +96,14 @@ class File:
         :param resource: cs3client resource.
         :param key: key for attribute to remove.
         :return: None (Success)
-                 May return FileLockedException (File is locked),
-                 AuthenticationException (Authentication failed) or
-                 UnknownException (Unknown error).
+        :raises: FileLockedException (File is locked)
+        :raises: AuthenticationException (Authentication failed)
+        :raises: UnknownException (Unknown error)
         """
         req = cs3sp.UnsetArbitraryMetadataRequest(ref=resource.ref, arbitrary_metadata_keys=[key])
         res = self._gateway.UnsetArbitraryMetadata(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "remove extended attribute")
-        self._log.debug(f'msg="Invoked rmxattr" result="{res.status}"')
+        self._status_code_handler.handle_errors(res.status, "remove extended attribute", resource.get_file_ref_str())
+        self._log.debug(f'msg="Invoked UnsetArbitraryMetaData" trace="{res.status.trace}"')
 
     def rename_file(self, resource: Resource, newresource: Resource) -> None:
         """
@@ -146,15 +112,15 @@ class File:
         :param resource: Original resource.
         :param newresource: New resource.
         :return: None (Success)
-                 May return NotFoundException (Original resource not found),
-                 FileLockException (Resource is locked),
-                 AuthenticationException (Authentication Failed),
-                 UnknownException (Unknown Error).
+        :raises: NotFoundException (Original resource not found)
+        :raises: FileLockException (Resource is locked)
+        :raises: AuthenticationException (Authentication Failed)
+        :raises: UnknownException (Unknown Error)
         """
         req = cs3sp.MoveRequest(source=resource.ref, destination=newresource.ref)
         res = self._gateway.Move(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "rename file")
-        self._log.debug(f'msg="Invoked renamefile" result="{res}"')
+        self._status_code_handler.handle_errors(res.status, "rename file", resource.get_file_ref_str())
+        self._log.debug(f'msg="Invoked Move" trace="{res.status.trace}"')
 
     def remove_file(self, resource: Resource) -> None:
         """
@@ -162,14 +128,14 @@ class File:
 
         :param resource:  Resource to remove.
         :return: None (Success)
-                 May return AuthenticationException (Authentication Failed),
-                 NotFoundException (Resource not found) or
-                 UnknownException (Unknown error).
+        :raises: AuthenticationException (Authentication Failed)
+        :raises: NotFoundException (Resource not found)
+        :raises: UnknownException (Unknown error)
         """
         req = cs3sp.DeleteRequest(ref=resource.ref)
         res = self._gateway.Delete(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "remove file")
-        self._log.debug(f'msg="Invoked removefile" result="{res}"')
+        self._status_code_handler.handle_errors(res.status, "remove file", resource.get_file_ref_str())
+        self._log.debug(f'msg="Invoked Delete" trace="{res.status.trace}"')
 
     def touch_file(self, resource: Resource) -> None:
         """
@@ -177,17 +143,17 @@ class File:
 
         :param resource: Resource to create.
         :return: None (Success)
-                 May return FileLockedException (File is locked),
-                 AuthenticationException (Authentication Failed) or
-                 UnknownException (Unknown error)
+        :raises: FileLockedException (File is locked)
+        :raises: AuthenticationException (Authentication Failed)
+        :raises: UnknownException (Unknown error)
         """
         req = cs3sp.TouchFileRequest(
             ref=resource.ref,
             opaque=types.Opaque(map={"Upload-Length": types.OpaqueEntry(decoder="plain", value=str.encode("0"))}),
         )
         res = self._gateway.TouchFile(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "touch file")
-        self._log.debug(f'msg="Invoked touchfile" result="{res}"')
+        self._status_code_handler.handle_errors(res.status, "touch file", resource.get_file_ref_str())
+        self._log.debug(f'msg="Invoked TouchFile" trace="{res.status.trace}"')
 
     def write_file(self, resource: Resource, content: str | bytes, size: int) -> None:
         """
@@ -200,9 +166,9 @@ class File:
         :param content: content to write
         :param size: size of content (optional)
         :return: None (Success)
-                 May return FileLockedException (File is locked),
-                 AuthenticationException (Authentication failed) or
-                 UnknownException (Unknown error),
+        :raises: FileLockedException (File is locked),
+        :raises: AuthenticationException (Authentication failed)
+        :raises: UnknownException (Unknown error)
 
         """
         tstart = time.time()
@@ -216,10 +182,10 @@ class File:
             opaque=types.Opaque(map={"Upload-Length": types.OpaqueEntry(decoder="plain", value=str.encode(str(size)))}),
         )
         res = self._gateway.InitiateFileUpload(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "write file")
+        self._status_code_handler.handle_errors(res.status, "write file", resource.get_file_ref_str())
         tend = time.time()
         self._log.debug(
-            f'msg="writefile: InitiateFileUploadRes returned" trace="{res.status.trace}" protocols="{res.protocols}"'
+            f'msg="Invoked InitiateFileUpload" trace="{res.status.trace}" protocols="{res.protocols}"'
         )
 
         # Upload
@@ -255,7 +221,9 @@ class File:
             )
             raise FileLockedException(f"Lock mismatch or lock expired: {putres.reason}")
         if putres.status_code == http.client.UNAUTHORIZED:
-            self._log_authentication_error(resource, putres, "write")
+            self._log.warning(
+                f'msg="Authentication failed on write" reason="{putres.reason}" {resource.get_file_ref_str()}'
+            )
             raise AuthenticationException(f"Operation not permitted: {putres.reason}")
         if putres.status_code != http.client.OK:
             if (
@@ -269,7 +237,7 @@ class File:
                 return
 
             self._log.error(
-                f'msg="Error uploading file to Reva" code="{putres.status_code}" reason="{putres.reason}"'
+                f'msg="Error uploading file" code="{putres.status_code}" reason="{putres.reason}"'
             )
             raise IOError(putres.reason)
         self._log.info(
@@ -283,19 +251,19 @@ class File:
 
         :param resource: Resource to read.
         :return: Generator[Bytes, None, None] (Success)
-                 May return NotFoundException (Resource not found),
-                 AuthenticationException (Authentication Failed) or
-                 UnknownException (Unknown Error).
+        :raises: NotFoundException (Resource not found)
+        :raises: AuthenticationException (Authentication Failed)
+        :raises: UnknownException (Unknown Error)
         """
         tstart = time.time()
 
         # prepare endpoint
         req = cs3sp.InitiateFileDownloadRequest(ref=resource.ref)
         res = self._gateway.InitiateFileDownload(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "read file")
+        self._status_code_handler.handle_errors(res.status, "read file", resource.get_file_ref_str())
         tend = time.time()
         self._log.debug(
-            f'msg="readfile: InitiateFileDownloadRes returned" trace="{res.status.trace}" protocols="{res.protocols}"'
+            f'msg="Invoked InitiateFileDownload" trace="{res.status.trace}" protocols="{res.protocols}"'
         )
 
         # Download
@@ -332,14 +300,14 @@ class File:
 
         :param resource: Direcotry to create.
         :return: None (Success)
-                 May return FileLockedException (File is locked),
-                 AuthenticationException (Authentication failed) or
-                 UnknownException (Unknown error).
+        :raises: FileLockedException (File is locked)
+        :raises: AuthenticationException (Authentication failed)
+        :raises: UnknownException (Unknown error)
         """
         req = cs3sp.CreateContainerRequest(ref=resource.ref)
         res = self._gateway.CreateContainer(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "make directory")
-        self._log.debug(f'msg="Invoked CreateContainer" result="{res}"')
+        self._status_code_handler.handle_errors(res.status, "make directory", resource.get_file_ref_str())
+        self._log.debug(f'msg="Invoked CreateContainer" trace="{res.status.trace}"')
 
     def list_dir(
             self, resource: Resource
@@ -349,13 +317,13 @@ class File:
 
         :param resource: the directory.
         :return: Generator[cs3.storage.provider.v1beta1.resources_pb2.ResourceInfo, None, None] (Success)
-                 May return NotFoundException (Resrouce not found),
-                 AuthenticationException (Authentication Failed) or
-                 UnknownException (Unknown error).
+        :raises: NotFoundException (Resrouce not found)
+        :raises: AuthenticationException (Authentication Failed)
+        :raises: UnknownException (Unknown error)
         """
         req = cs3sp.ListContainerRequest(ref=resource.ref)
         res = self._gateway.ListContainer(request=req, metadata=[self._auth.get_token()])
-        self._handle_errors(resource, res, "list directory")
-        self._log.debug(f'msg="Invoked ListContainer" result="{res}"')
+        self._status_code_handler.handle_errors(res.status, "list directory", resource.get_file_ref_str())
+        self._log.debug(f'msg="Invoked ListContainer" trace="{res.status.trace}"')
         for info in res.infos:
             yield info
