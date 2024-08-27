@@ -195,6 +195,7 @@ class Resource:
         Generates a string from the file ref, '<type>="fileref">'
 
         :return: str '<type>="fileref">'
+        :raises: ValueError (Invalid Resource)
         """
         if self._abs_path:
             return f'absolute_path="{self._abs_path}"'
@@ -202,3 +203,4 @@ class Resource:
             return f'relative_path="{self._parent_id}/{self._rel_path}"'
         elif self._opaque_id:
             return f'opaque_id="{self._opaque_id}"'
+        raise ValueError("Invalid Resource")

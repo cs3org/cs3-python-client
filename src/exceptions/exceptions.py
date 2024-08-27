@@ -62,3 +62,12 @@ class AlreadyExistsException(IOError):
 
     def __init__(self, message: str = ""):
         super().__init__(message)
+
+
+class UnimplementedException(Exception):
+    """
+    Standard error thrown when attempting to use a feature that is not implemented
+    """
+
+    def __init__(self, message: str = ""):
+        super().__init__(message)

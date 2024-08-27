@@ -493,7 +493,7 @@ class Share:
 
     @classmethod
     def _create_public_share_update(
-        self,
+        cls,
         type: str,
         role: str,
         password: str = None,

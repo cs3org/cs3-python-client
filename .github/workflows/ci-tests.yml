@@ -35,4 +35,5 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest
+        if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
+        pytest --cov-report term --cov=src tests/
