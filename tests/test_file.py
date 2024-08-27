@@ -8,6 +8,10 @@ Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@c
 Last updated: 19/08/2024
 """
 
+import sys
+
+sys.path.append("src/")
+
 from cs3resource import Resource
 from exceptions.exceptions import (
     AuthenticationException,
@@ -26,6 +30,8 @@ from fixtures import (  # noqa: F401 (they are used, the framework is not detect
 )
 from unittest.mock import Mock, patch
 import pytest
+
+sys.path.append("src/")
 
 
 @pytest.mark.parametrize(

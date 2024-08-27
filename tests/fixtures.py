@@ -9,6 +9,7 @@ Last updated: 19/08/2024
 
 """
 
+import sys
 import pytest
 from unittest.mock import Mock, patch
 from configparser import ConfigParser
@@ -24,6 +25,8 @@ from checkpoint import Checkpoint
 from config import Config
 import base64
 import json
+
+sys.path.append("../src/")
 
 
 @pytest.fixture

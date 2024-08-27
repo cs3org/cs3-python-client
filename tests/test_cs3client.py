@@ -8,6 +8,10 @@ Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@c
 Last updated: 26/07/2024
 """
 
+import sys
+
+sys.path.append("src/")
+
 from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
     cs3_client_insecure,
     cs3_client_secure,
@@ -16,6 +20,8 @@ from fixtures import (  # noqa: F401 (they are used, the framework is not detect
     mock_gateway,
     create_mock_jwt,
 )
+
+sys.path.append("src/")
 
 
 def test_cs3client_initialization_secure(cs3_client_secure):  # noqa: F811 (not a redefinition)

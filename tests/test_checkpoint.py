@@ -8,6 +8,10 @@ Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@c
 Last updated: 19/08/2024
 """
 
+import sys
+
+sys.path.append("src/")
+
 from exceptions.exceptions import (
     AuthenticationException,
     NotFoundException,
@@ -30,6 +34,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+sys.path.append("src/")
 # Test cases for the Checkpoint class
 
 
