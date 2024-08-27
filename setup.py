@@ -10,19 +10,25 @@ Last updated: 26/07/2024
 
 from setuptools import setup, find_packages
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
 setup(
     name="cs3client",
-    version="0.1",
     author="Rasmus Welander, Diogo Castro, Giuseppe Lo Presti",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     py_modules=["cs3client"],
+    description="CS3 client for Python",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/cs3org/cs3-python-client",
     install_requires=[
         "grpcio>=1.47.0",
         "grpcio-tools>=1.47.0",
         "pyOpenSSL",
         "requests",
-        "cs3apis>=0.1.dev101",
+        "cs3apis",
         "PyJWT",
         "protobuf",
         "cryptography",
