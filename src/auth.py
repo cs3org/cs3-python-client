@@ -3,7 +3,7 @@ auth.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 19/08/2024
+Last updated: 28/08/2024
 """
 
 import grpc
@@ -40,16 +40,6 @@ class Auth:
         self._client_secret: str | None = None
         self._token: str | None = None
 
-    def set_token(self, token: str) -> None:
-        """
-        Should be used if the user wishes to set the reva token directly, instead of letting the client
-        exchange credentials for the token. NOTE that token OR the client secret has to be set when
-        instantiating the client object.
-
-        :param token: The reva token.
-        """
-        self._token = token
-
     def set_client_secret(self, token: str) -> None:
         """
         Sets the client secret, exists so that the user can change the client secret (e.g. token, password) at runtime,
@@ -71,16 +61,13 @@ class Auth:
         :raises: SecretNotSetException (neither token or client secret was set)
         """
 
-        if not Auth._check_token(self._token):
-            # Check that client secret or token is set
-            if not self._client_secret and not self._token:
-                self._log.error("Attempted to authenticate, neither client secret or token was set.")
-                raise SecretNotSetException("The client secret (e.g. token, passowrd) is not set")
-            elif not self._client_secret and self._token:
-                # Case where ONLY a token is provided but it has expired
-                self._log.error("The provided token have expired")
-                raise AuthenticationException("The credentials have expired")
-            # Create an authentication request
+        try:
+            Auth.check_token(self._token)
+        except ValueError:
+            self._log.error("Attempted to authenticate, neither client secret or token was set.")
+            raise SecretNotSetException("The client secret (e.g. token, passowrd) is not set")
+        except AuthenticationException:
+            # Token has expired, obtain another one.
             req = AuthenticateRequest(
                 type=self._config.auth_login_type,
                 client_id=self._config.auth_client_id,
@@ -116,20 +103,22 @@ class Auth:
         return res.types
 
     @classmethod
-    def _check_token(cls, token: str) -> bool:
+    def check_token(cls, token: str) -> str:
         """
         Checks if the given token is set and valid.
 
         :param token: JWT token as a string.
-        :return: True if the token is valid, False otherwise.
+        :return tuple: A tuple containing the header key and the token.
+        :raises: ValueError (Token missing)
+        :raises: AuthenticationException (Token is expired)
         """
         if not token:
-            return False
+            raise ValueError("A token is required")
         # Decode the token without verifying the signature
         decoded_token = jwt.decode(jwt=token, algorithms=["HS256"], options={"verify_signature": False})
         now = datetime.datetime.now().timestamp()
         token_expiration = decoded_token.get("exp")
         if token_expiration and now > token_expiration:
-            return False
+            raise AuthenticationException("Token has expired")
 
-        return True
+        return ("x-access-token", token)
