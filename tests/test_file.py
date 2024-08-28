@@ -5,24 +5,20 @@ Tests that the File class methods work as expected.
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 19/08/2024
+Last updated: 28/08/2024
 """
 
-import sys
 import pytest
 from unittest.mock import Mock, patch
 import cs3.rpc.v1beta1.code_pb2 as cs3code
-
-sys.path.append("src/")
-
-from cs3resource import Resource  # noqa: E402
-from exceptions.exceptions import (  # noqa: E402
+from cs3resource import Resource
+from exceptions.exceptions import (
     AuthenticationException,
     NotFoundException,
     FileLockedException,
     UnknownException,
 )
-from fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
+from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
     mock_config,
     mock_logger,
     mock_authentication,
@@ -30,6 +26,8 @@ from fixtures import (  # noqa: F401, E402 (they are used, the framework is not 
     file_instance,
     mock_status_code_handler,
 )
+
+# Test cases for the file class.
 
 
 @pytest.mark.parametrize(
@@ -48,15 +46,16 @@ def test_stat(
     mock_response = Mock()
     mock_response.status.code = status_code
     mock_response.status.message = status_message
+    auth_token = ('x-access-token', "some_token")
     if status_code == cs3code.CODE_OK:
         mock_response.info = status_message
 
     with patch.object(file_instance._gateway, "Stat", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                file_instance.stat(resource)
+                file_instance.stat(auth_token, resource)
         else:
-            result = file_instance.stat(resource)
+            result = file_instance.stat(auth_token, resource)
             assert result == expected_result
 
 
@@ -76,13 +75,14 @@ def test_set_xattr(file_instance, status_code, status_message, expected_exceptio
     mock_response = Mock()
     mock_response.status.code = status_code
     mock_response.status.message = status_message
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(file_instance._gateway, "SetArbitraryMetadata", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                file_instance.set_xattr(resource, key, value)
+                file_instance.set_xattr(auth_token, resource, key, value)
         else:
-            file_instance.set_xattr(resource, key, value)
+            file_instance.set_xattr(auth_token, resource, key, value)
 
 
 @pytest.mark.parametrize(
@@ -103,13 +103,14 @@ def test_remove_xattr(
     mock_response = Mock()
     mock_response.status.code = status_code
     mock_response.status.message = status_message
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(file_instance._gateway, "UnsetArbitraryMetadata", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                file_instance.remove_xattr(resource, key)
+                file_instance.remove_xattr(auth_token, resource, key)
         else:
-            file_instance.remove_xattr(resource, key)
+            file_instance.remove_xattr(auth_token, resource, key)
 
 
 @pytest.mark.parametrize(
@@ -129,13 +130,14 @@ def test_rename_file(file_instance, status_code, status_message, expected_except
     mock_response = Mock()
     mock_response.status.code = status_code
     mock_response.status.message = status_message
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(file_instance._gateway, "Move", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                file_instance.rename_file(resource, newresource)
+                file_instance.rename_file(auth_token, resource, newresource)
         else:
-            file_instance.rename_file(resource, newresource)
+            file_instance.rename_file(auth_token, resource, newresource)
 
 
 @pytest.mark.parametrize(
@@ -152,13 +154,14 @@ def test_remove_file(file_instance, status_code, status_message, expected_except
     mock_response = Mock()
     mock_response.status.code = status_code
     mock_response.status.message = status_message
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(file_instance._gateway, "Delete", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                file_instance.remove_file(resource)
+                file_instance.remove_file(auth_token, resource)
         else:
-            file_instance.remove_file(resource)
+            file_instance.remove_file(auth_token, resource)
 
 
 @pytest.mark.parametrize(
@@ -175,13 +178,14 @@ def test_touch_file(file_instance, status_code, status_message, expected_excepti
     mock_response = Mock()
     mock_response.status.code = status_code
     mock_response.status.message = status_message
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(file_instance._gateway, "TouchFile", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                file_instance.touch_file(resource)
+                file_instance.touch_file(auth_token, resource)
         else:
-            file_instance.touch_file(resource)
+            file_instance.touch_file(auth_token, resource)
 
 
 @pytest.mark.parametrize(
@@ -208,6 +212,7 @@ def test_write_file(
     mock_upload_response.status.code = status_code
     mock_upload_response.status.message = status_message
     mock_upload_response.protocols = [Mock(protocol="simple", upload_endpoint="http://example.com", token="token")]
+    auth_token = ('x-access-token', "some_token")
 
     mock_put_response = Mock()
     mock_put_response.status_code = put_response_status
@@ -215,10 +220,10 @@ def test_write_file(
     with patch.object(file_instance._gateway, "InitiateFileUpload", return_value=mock_upload_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                file_instance.write_file(resource, content, size)
+                file_instance.write_file(auth_token, resource, content, size)
         else:
             with patch("requests.put", return_value=mock_put_response):
-                file_instance.write_file(resource, content, size)
+                file_instance.write_file(auth_token, resource, content, size)
 
 
 @pytest.mark.parametrize(
@@ -235,13 +240,14 @@ def test_make_dir(file_instance, status_code, status_message, expected_exception
     mock_response = Mock()
     mock_response.status.code = status_code
     mock_response.status.message = status_message
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(file_instance._gateway, "CreateContainer", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                file_instance.make_dir(resource)
+                file_instance.make_dir(auth_token, resource)
         else:
-            file_instance.make_dir(resource)
+            file_instance.make_dir(auth_token, resource)
 
 
 @pytest.mark.parametrize(
@@ -262,18 +268,19 @@ def test_list_dir(
     mock_response.status.code = status_code
     mock_response.status.message = status_message
     mock_response.infos = infos
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(file_instance._gateway, "ListContainer", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                res = file_instance.list_dir(resource)
+                res = file_instance.list_dir(auth_token, resource)
                 # Lazy evaluation
                 first_item = next(res, None)
                 if first_item is not None:
                     for _ in res:
                         pass
         else:
-            res = file_instance.list_dir(resource)
+            res = file_instance.list_dir(auth_token, resource)
             # Lazy evaluation
             first_item = next(res, None)
             assert first_item == "file1"
@@ -303,11 +310,12 @@ def test_read_file(
     mock_fileget_response = Mock()
     mock_fileget_response.status_code = 200
     mock_fileget_response.iter_content = Mock(return_value=iter_content)
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(file_instance._gateway, "InitiateFileDownload", return_value=mock_download_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                res = file_instance.read_file(resource)
+                res = file_instance.read_file(auth_token, resource)
                 # Lazy evaluation
                 first_item = next(res, None)
                 if first_item is not None:
@@ -315,7 +323,7 @@ def test_read_file(
                         pass
         else:
             with patch("requests.get", return_value=mock_fileget_response):
-                res = file_instance.read_file(resource)
+                res = file_instance.read_file(auth_token, resource)
                 # Lazy evaluation
                 chunks = list(res)
                 assert chunks == iter_content

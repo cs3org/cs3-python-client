@@ -9,7 +9,6 @@ Last updated: 19/08/2024
 
 """
 
-import sys
 import pytest
 from unittest.mock import Mock, patch
 from configparser import ConfigParser
@@ -17,16 +16,15 @@ import cs3.rpc.v1beta1.code_pb2 as cs3code
 import base64
 import json
 
-sys.path.append("src/")
-from cs3client import CS3Client  # noqa: E402
-from file import File  # noqa: E402
-from auth import Auth  # noqa: E402
-from user import User  # noqa: E402
-from statuscodehandler import StatusCodeHandler  # noqa: E402
-from share import Share  # noqa: E402
-from app import App  # noqa: E402
-from checkpoint import Checkpoint  # noqa: E402
-from config import Config  # noqa: E402
+from cs3client import CS3Client
+from file import File
+from auth import Auth
+from user import User
+from statuscodehandler import StatusCodeHandler
+from share import Share
+from app import App
+from checkpoint import Checkpoint
+from config import Config
 
 
 @pytest.fixture
@@ -171,28 +169,27 @@ def cs3_client_insecure(
 
 
 @pytest.fixture
-def app_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+def app_instance(mock_gateway, mock_config, mock_logger, mock_status_code_handler):
     app = App(
-        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication, mock_status_code_handler
+        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_status_code_handler
     )
     return app
 
 
 @pytest.fixture
-def checkpoint_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+def checkpoint_instance(mock_gateway, mock_config, mock_logger, mock_status_code_handler):
     checkpoint = Checkpoint(
-        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication, mock_status_code_handler
+        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_status_code_handler
     )
     return checkpoint
 
 
 @pytest.fixture
-def share_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+def share_instance(mock_gateway, mock_config, mock_logger, mock_status_code_handler):
     share = Share(
         Config(mock_config, "cs3client"),
         mock_logger,
         mock_gateway,
-        mock_authentication,
         mock_status_code_handler,
     )
     return share
@@ -200,16 +197,16 @@ def share_instance(mock_authentication, mock_gateway, mock_config, mock_logger, 
 
 # All parameters are inferred by pytest from existing fixtures
 @pytest.fixture
-def file_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+def file_instance(mock_gateway, mock_config, mock_logger, mock_status_code_handler):
     file = File(
-        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication, mock_status_code_handler
+        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_status_code_handler
     )
     return file
 
 
 @pytest.fixture
-def user_instance(mock_authentication, mock_gateway, mock_config, mock_logger, mock_status_code_handler):
+def user_instance(mock_gateway, mock_config, mock_logger, mock_status_code_handler):
     user = User(
-        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_authentication, mock_status_code_handler
+        Config(mock_config, "cs3client"), mock_logger, mock_gateway, mock_status_code_handler
     )
     return user
