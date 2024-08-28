@@ -14,19 +14,19 @@ import pytest
 from unittest.mock import Mock, patch
 from configparser import ConfigParser
 import cs3.rpc.v1beta1.code_pb2 as cs3code
-from cs3client import CS3Client
-from file import File
-from auth import Auth
-from user import User
-from statuscodehandler import StatusCodeHandler
-from share import Share
-from app import App
-from checkpoint import Checkpoint
-from config import Config
 import base64
 import json
 
-sys.path.append("../src/")
+sys.path.append("src/")
+from cs3client import CS3Client  # noqa: E402
+from file import File  # noqa: E402
+from auth import Auth  # noqa: E402
+from user import User  # noqa: E402
+from statuscodehandler import StatusCodeHandler  # noqa: E402
+from share import Share  # noqa: E402
+from app import App  # noqa: E402
+from checkpoint import Checkpoint  # noqa: E402
+from config import Config  # noqa: E402
 
 
 @pytest.fixture

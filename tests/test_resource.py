@@ -9,14 +9,12 @@ Last updated: 26/07/2024
 """
 
 import sys
-
-sys.path.append("src/")
-
 import unittest
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
-from cs3resource import Resource
 
 sys.path.append("src/")
+
+from cs3resource import Resource  # noqa: E402
 
 
 class TestResource(unittest.TestCase):

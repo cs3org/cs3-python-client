@@ -9,19 +9,21 @@ Last updated: 19/08/2024
 """
 
 import sys
+from unittest.mock import Mock, patch
+import pytest
+import cs3.rpc.v1beta1.code_pb2 as cs3code
 
 sys.path.append("src/")
 
-from exceptions.exceptions import (
+from exceptions.exceptions import (  # noqa: E402
     AuthenticationException,
     NotFoundException,
     UnknownException,
 )
 
-from cs3resource import Resource
+from cs3resource import Resource  # noqa: E402
 
-import cs3.rpc.v1beta1.code_pb2 as cs3code
-from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
+from fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
     mock_config,
     mock_logger,
     mock_authentication,
@@ -30,11 +32,7 @@ from fixtures import (  # noqa: F401 (they are used, the framework is not detect
     mock_status_code_handler,
 )
 
-from unittest.mock import Mock, patch
 
-import pytest
-
-sys.path.append("src/")
 # Test cases for the Checkpoint class
 
 

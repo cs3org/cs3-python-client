@@ -12,7 +12,7 @@ import sys
 
 sys.path.append("src/")
 
-from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
+from fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
     cs3_client_insecure,
     cs3_client_secure,
     mock_config,
@@ -20,8 +20,6 @@ from fixtures import (  # noqa: F401 (they are used, the framework is not detect
     mock_gateway,
     create_mock_jwt,
 )
-
-sys.path.append("src/")
 
 
 def test_cs3client_initialization_secure(cs3_client_secure):  # noqa: F811 (not a redefinition)

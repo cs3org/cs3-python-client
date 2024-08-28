@@ -81,7 +81,7 @@ class Resource:
             if file.find("/") > 0:
                 # assume we have an relative path,
                 parent_id = file[: file.find("/")]
-                rel_path = file[file.find("/") :]
+                rel_path = file[file.find("/"):]
             else:
                 # assume we have an opaque fileid
                 opaque_id = file

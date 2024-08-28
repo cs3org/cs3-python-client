@@ -9,18 +9,20 @@ Last updated: 19/08/2024
 """
 
 import sys
+import pytest
+from unittest.mock import Mock, patch
+import cs3.rpc.v1beta1.code_pb2 as cs3code
 
 sys.path.append("src/")
 
-from cs3resource import Resource
-from exceptions.exceptions import (
+from cs3resource import Resource  # noqa: E402
+from exceptions.exceptions import (  # noqa: E402
     AuthenticationException,
     NotFoundException,
     FileLockedException,
     UnknownException,
 )
-import cs3.rpc.v1beta1.code_pb2 as cs3code
-from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
+from fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
     mock_config,
     mock_logger,
     mock_authentication,
@@ -28,10 +30,6 @@ from fixtures import (  # noqa: F401 (they are used, the framework is not detect
     file_instance,
     mock_status_code_handler,
 )
-from unittest.mock import Mock, patch
-import pytest
-
-sys.path.append("src/")
 
 
 @pytest.mark.parametrize(
