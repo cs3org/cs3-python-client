@@ -5,22 +5,18 @@ Tests that the User class methods work as expected.
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 19/08/2024
+Last updated: 28/08/2024
 """
 
-import sys
 import pytest
 from unittest.mock import Mock, patch
 import cs3.rpc.v1beta1.code_pb2 as cs3code
-
-sys.path.append("src/")
-
-from exceptions.exceptions import (  # noqa: E402
+from cs3client.exceptions.exceptions import (
     AuthenticationException,
     NotFoundException,
     UnknownException,
 )
-from fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
+from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
     mock_config,
     mock_logger,
     mock_authentication,
@@ -29,8 +25,9 @@ from fixtures import (  # noqa: F401, E402 (they are used, the framework is not 
     mock_status_code_handler,
 )
 
-
 # Test cases for the User class
+
+
 @pytest.mark.parametrize(
     "status_code, status_message, expected_exception, user_data",
     [
@@ -133,11 +130,12 @@ def test_find_users(
     mock_response.status.code = status_code
     mock_response.status.message = status_message
     mock_response.users = users
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(user_instance._gateway, "FindUsers", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                user_instance.find_users(filter)
+                user_instance.find_users(auth_token, filter)
         else:
-            result = user_instance.find_users(filter)
+            result = user_instance.find_users(auth_token, filter)
             assert result == users

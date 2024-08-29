@@ -5,26 +5,23 @@ Tests that the Share class methods work as expected.
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 19/08/2024
+Last updated: 28/08/2024
 """
 
-import sys
 import pytest
 from unittest.mock import Mock, patch
 import cs3.sharing.collaboration.v1beta1.resources_pb2 as cs3scr
 import cs3.sharing.link.v1beta1.link_api_pb2 as cs3slapi
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 import cs3.rpc.v1beta1.code_pb2 as cs3code
-
-sys.path.append("src/")
-from exceptions.exceptions import (  # noqa: E402
+from cs3client.exceptions.exceptions import (
     AuthenticationException,
     NotFoundException,
     UnknownException,
     FileLockedException,
     AlreadyExistsException,
 )
-from fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
+from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
     mock_config,
     mock_logger,
     mock_authentication,
@@ -33,8 +30,7 @@ from fixtures import (  # noqa: F401, E402 (they are used, the framework is not 
     mock_status_code_handler,
 )
 
-
-# Test cases for the Share class `get_share` method using parameterized tests
+# Test cases for the Share class.
 
 
 @pytest.mark.parametrize(
@@ -63,16 +59,27 @@ def test_create_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = status_message
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "CreateShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
                 share_instance.create_share(
-                    resource_info=resource_info, opaque_id=opaque_id, idp=idp, role=role, grantee_type=grantee_type
+                    auth_token,
+                    resource_info=resource_info,
+                    opaque_id=opaque_id,
+                    idp=idp,
+                    role=role,
+                    grantee_type=grantee_type
                 )
         else:
             result = share_instance.create_share(
-                resource_info=resource_info, opaque_id=opaque_id, idp=idp, role=role, grantee_type=grantee_type
+                auth_token,
+                resource_info=resource_info,
+                opaque_id=opaque_id,
+                idp=idp,
+                role=role,
+                grantee_type=grantee_type
             )
             assert result == expected_result
 
@@ -94,13 +101,14 @@ def test_list_existing_shares(
     if status_code == cs3code.CODE_OK:
         mock_response.share_infos = expected_result[0]
         mock_response.next_page_token = expected_result[1]
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "ListExistingShares", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.list_existing_shares()
+                share_instance.list_existing_shares(auth_token)
         else:
-            result = share_instance.list_existing_shares()
+            result = share_instance.list_existing_shares(auth_token)
             assert result == expected_result
 
 
@@ -123,13 +131,14 @@ def test_get_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "GetShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.get_share(share_id)
+                share_instance.get_share(auth_token, share_id)
         else:
-            result = share_instance.get_share(share_id)
+            result = share_instance.get_share(auth_token, share_id)
             assert result == expected_result
 
 
@@ -152,13 +161,14 @@ def test_remove_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "RemoveShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.remove_share(share_id)
+                share_instance.remove_share(auth_token, share_id)
         else:
-            result = share_instance.remove_share(share_id)
+            result = share_instance.remove_share(auth_token, share_id)
             assert result is None
 
 
@@ -183,13 +193,14 @@ def test_update_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "UpdateShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.update_share(role=role, opaque_id=opaque_id)
+                share_instance.update_share(auth_token, role=role, opaque_id=opaque_id)
         else:
-            result = share_instance.update_share(role=role, opaque_id=opaque_id)
+            result = share_instance.update_share(auth_token, role=role, opaque_id=opaque_id)
             assert result == expected_result
 
 
@@ -211,13 +222,14 @@ def test_list_existing_received_shares(
     if status_code == cs3code.CODE_OK:
         mock_response.share_infos = expected_result[0]
         mock_response.next_page_token = expected_result[1]
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "ListExistingReceivedShares", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.list_received_existing_shares()
+                share_instance.list_received_existing_shares(auth_token)
         else:
-            result = share_instance.list_received_existing_shares()
+            result = share_instance.list_received_existing_shares(auth_token)
             assert result == expected_result
 
 
@@ -240,13 +252,14 @@ def test_get_received_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "GetReceivedShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.get_received_share(share_id)
+                share_instance.get_received_share(auth_token, share_id)
         else:
-            result = share_instance.get_received_share(share_id)
+            result = share_instance.get_received_share(auth_token, share_id)
             assert result == expected_result
 
 
@@ -271,13 +284,14 @@ def test_update_received_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "UpdateReceivedShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.update_received_share(received_share=received_share)
+                share_instance.update_received_share(auth_token, received_share=received_share)
         else:
-            result = share_instance.update_received_share(received_share=received_share)
+            result = share_instance.update_received_share(auth_token, received_share=received_share)
             assert result == expected_result
 
 
@@ -304,13 +318,14 @@ def test_create_public_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "CreatePublicShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.create_public_share(resource_info=resource_info, role=role)
+                share_instance.create_public_share(auth_token, resource_info=resource_info, role=role)
         else:
-            result = share_instance.create_public_share(resource_info=resource_info, role=role)
+            result = share_instance.create_public_share(auth_token, resource_info=resource_info, role=role)
             assert result == expected_result
 
 
@@ -331,13 +346,14 @@ def list_existing_public_shares(
     if status_code == cs3code.CODE_OK:
         mock_response.share_infos = expected_result[0]
         mock_response.next_page_token = expected_result[1]
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "ListExistingPublicShares", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.list_existing_public_shares()
+                share_instance.list_existing_public_shares(auth_token)
         else:
-            result = share_instance.list_existing_public_shares()
+            result = share_instance.list_existing_public_shares(auth_token)
             assert result == expected_result
 
 
@@ -360,13 +376,14 @@ def test_get_public_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "GetPublicShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.get_public_share(share_id)
+                share_instance.get_public_share(auth_token, share_id)
         else:
-            result = share_instance.get_public_share(share_id)
+            result = share_instance.get_public_share(auth_token, share_id)
             assert result == expected_result
 
 
@@ -391,13 +408,14 @@ def test_update_public_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "UpdatePublicShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.update_public_share(type=type, role=role, opaque_id=opqaue_id)
+                share_instance.update_public_share(auth_token, type=type, role=role, opaque_id=opqaue_id)
         else:
-            result = share_instance.update_public_share(type=type, role=role, opaque_id=opqaue_id)
+            result = share_instance.update_public_share(auth_token, type=type, role=role, opaque_id=opqaue_id)
             assert result == expected_result
 
 
@@ -423,13 +441,14 @@ def test_remove_public_share(
     mock_response.status.message = status_message
     if status_code == cs3code.CODE_OK:
         mock_response.share = expected_result
+    auth_token = ('x-access-token', "some_token")
 
     with patch.object(share_instance._gateway, "RemovePublicShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.remove_public_share(share_id)
+                share_instance.remove_public_share(auth_token, share_id)
         else:
-            result = share_instance.remove_public_share(share_id)
+            result = share_instance.remove_public_share(auth_token, share_id)
             assert result is None
 
 

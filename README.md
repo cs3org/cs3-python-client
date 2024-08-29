@@ -37,8 +37,7 @@ Alternatively, you can clone this repository and install manually:
 ```bash
 git clone git@github.com:cs3org/cs3-python-client.git
 cd cs3-python-client
-pip install -e . 
-export PYTHONPATH="path/to/cs3-python-client/:$PYTHONPATH"
+pip install . 
 ```
 
 
@@ -112,73 +111,80 @@ lock_expiration = 1800
 
 To use `cs3client`, you first need to import and configure it. Here's a simple example of how to set up and start using the client. For configuration see [Configuration](#configuration). For more in depth examples see `cs3-python-client/examples/`. 
 
-### Initilization
+### Initilization and Authentication
 ```python
 import logging
 import configparser
-from cs3client import CS3Client
-from cs3resource import Resource
+from cs3client.cs3client import CS3Client
 
 config = configparser.ConfigParser()
 with open("default.conf") as fdef:
     config.read_file(fdef)
-
 log = logging.getLogger(__name__)
 
 client = CS3Client(config, "cs3client", log)
-# client.auth.set_token("<your_token_here>")
-# OR
+
+# Set client secret
 client.auth.set_client_secret("<your_client_secret_here>")
+# Checks if token is expired if not return ('x-access-token', <token>)
+# if expired, request a new token from reva
+auth_token = client.auth.get_token()
+
+# OR if you already have a reva token
+# Checks if token is expired if not return (x-access-token', <token>)
+# if expired, throws an AuthenticationException (so you can refresh your reva token)
+token = "<your_reva_token>"
+auth_token = client.auth.check_token(token)
 ```
 
 ### File Example
 ```python
 # mkdir
 directory_resource = Resource.from_file_ref_and_endpoint(f"/eos/user/r/rwelande/test_directory")
-res = client.file.make_dir(directory_resource)
+res = client.file.make_dir(client.auth.get_token(), directory_resource)
 
 # touchfile
 touch_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/touch_file.txt")
-res = client.file.touch_file(touch_resource)
+res = client.file.touch_file(client.auth.get_token(), touch_resource)
 
 # setxattr
 resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/text_file.txt")
-res = client.file.set_xattr(resource, "iop.wopi.lastwritetime", str(1720696124))
+res = client.file.set_xattr(client.auth.get_token(), resource, "iop.wopi.lastwritetime", str(1720696124))
 
 # rmxattr
-res = client.file.remove_xattr(resource, "iop.wopi.lastwritetime")
+res = client.file.remove_xattr(client.auth.get_token(), resource, "iop.wopi.lastwritetime")
 
 # stat
-res = client.file.stat(resource)
+res = client.file.stat(client.auth.get_token(), resource)
 
 # removefile
-res = client.file.remove_file(touch_resource)
+res = client.file.remove_file(client.auth.get_token(), touch_resource)
 
 # rename
 rename_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/rename_file.txt")
-res = client.file.rename_file(resource, rename_resource)
+res = client.file.rename_file(client.auth.get_token(), resource, rename_resource)
 
 # writefile
 content = b"Hello World"
 size = len(content)
-res = client.file.write_file(rename_resource, content, size)
+res = client.file.write_file(client.auth.get_token(), rename_resource, content, size)
 
 # listdir
 list_directory_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande")
-res = client.file.list_dir(list_directory_resource)
+res = client.file.list_dir(client.auth.get_token(), list_directory_resource)
 
 
 # readfile
-file_res = client.file.read_file(rename_resource)
+file_res = client.file.read_file(client.auth.get_token(), rename_resource)
 ```
 
 ### Share Example
 ```python
 # Create share #
 resource = Resource.from_file_ref_and_endpoint("/eos/user/r/<some_username>/text.txt")
-resource_info = client.file.stat(resource)
+resource_info = client.file.stat(client.auth.get_token(), resource)
 user = client.user.get_user_by_claim("username", "<some_username>")
-res = client.share.create_share(resource_info, user.id.opaque_id, user.id.idp, "EDITOR", "USER")
+res = client.share.create_share(client.auth.get_token(), resource_info, user.id.opaque_id, user.id.idp, "EDITOR", "USER")
 
 # List existing shares #
 filter_list = []
@@ -186,32 +192,32 @@ filter = client.share.create_share_filter(resource_id=resource_info.id, filter_t
 filter_list.append(filter)
 filter = client.share.create_share_filter(share_state="SHARE_STATE_PENDING", filter_type="TYPE_STATE")
 filter_list.append(filter)
-res, _ = client.share.list_existing_shares()
+res, _ = client.share.list_existing_shares(client.auth.get_token(), )
 
 # Get share #
 share_id = "58"
-res = client.share.get_share(opaque_id=share_id)
+res = client.share.get_share(client.auth.get_token(), opaque_id=share_id)
 
 # update share #
-res = client.share.update_share(opaque_id=share_id, role="VIEWER")
+res = client.share.update_share(client.auth.get_token(), opaque_id=share_id, role="VIEWER")
 
 # remove share #
-res = client.share.remove_share(opaque_id=share_id)
+res = client.share.remove_share(client.auth.get_token(), opaque_id=share_id)
 
 # List existing received shares #
 filter_list = []
 filter = client.share.create_share_filter(share_state="SHARE_STATE_ACCEPTED", filter_type="TYPE_STATE")
 filter_list.append(filter)
-res, _ = client.share.list_received_existing_shares()
+res, _ = client.share.list_received_existing_shares(client.auth.get_token())
 
 # get received share #
-received_share = client.share.get_received_share(opaque_id=share_id)
+received_share = client.share.get_received_share(client.auth.get_token(), opaque_id=share_id)
 
 # update recieved share #
-res = client.share.update_received_share(received_share=received_share, state="SHARE_STATE_ACCEPTED")
+res = client.share.update_received_share(client.auth.get_token(), received_share=received_share, state="SHARE_STATE_ACCEPTED")
 
 # create public share #
-res = client.share.create_public_share(resource_info, role="VIEWER")
+res = client.share.create_public_share(client.auth.get_token(), resource_info, role="VIEWER")
 
 # list existing public shares #
 filter_list = []
@@ -219,22 +225,22 @@ filter = client.share.create_public_share_filter(resource_id=resource_info.id, f
 filter_list.append(filter)
 res, _ = client.share.list_existing_public_shares(filter_list=filter_list)
 
-res = client.share.get_public_share(opaque_id=share_id, sign=True)
+res = client.share.get_public_share(client.auth.get_token(), opaque_id=share_id, sign=True)
 # OR token = "<token>"
 # res = client.share.get_public_share(token=token, sign=True)
 
 # update public share #
-res = client.share.update_public_share(type="TYPE_PASSWORD", token=token, role="VIEWER", password="hello")
+res = client.share.update_public_share(client.auth.get_token(), type="TYPE_PASSWORD", token=token, role="VIEWER", password="hello")
 
 # remove public share #
-res = client.share.remove_public_share(token=token)
+res = client.share.remove_public_share(client.auth.get_token(), token=token)
 
 ```
 
 ### User Example
 ```python
 # find_user
-res = client.user.find_users("rwel")
+res = client.user.find_users(client.auth.get_token(), "rwel")
 
 # get_user
 res = client.user.get_user("https://auth.cern.ch/auth/realms/cern", "asdoiqwe")
@@ -253,21 +259,21 @@ res = client.user.get_user_by_claim("username", "rwelande")
 ### App Example
 ```python
 # list_app_providers
-res = client.app.list_app_providers()
+res = client.app.list_app_providers(client.auth.get_token())
 
 # open_in_app
 resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/collabora.odt")
-res = client.app.open_in_app(resource)
+res = client.app.open_in_app(client.auth.get_token(), resource)
 ```
 
 ### Checkpoint Example
 ```python
 # list file versions
 resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/test.md")
-res = client.checkpoint.list_file_versions(resource)
+res = client.checkpoint.list_file_versions(client.auth.get_token(), resource)
 
 # restore file version
-res = client.checkpoint.restore_file_version(resource, "1722936250.0569fa2f")
+res = client.checkpoint.restore_file_version(client.auth.get_token(), resource, "1722936250.0569fa2f")
 ```
 
 ## Documentation
@@ -282,6 +288,9 @@ make html
 ## Unit tests
 
 ```bash
+# install library
+pip install .
+# run unit tests
 pytest --cov-report term --cov=serc tests/
 ```
 

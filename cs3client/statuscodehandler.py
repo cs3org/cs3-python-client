@@ -6,12 +6,13 @@ Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@c
 Last updated: 19/08/2024
 """
 
-from exceptions.exceptions import AuthenticationException, NotFoundException, \
-    UnknownException, AlreadyExistsException, FileLockedException, UnimplementedException
 import logging
-from config import Config
 import cs3.rpc.v1beta1.code_pb2 as cs3code
 import cs3.rpc.v1beta1.status_pb2 as cs3status
+
+from cs3client.exceptions.exceptions import AuthenticationException, NotFoundException, \
+    UnknownException, AlreadyExistsException, FileLockedException, UnimplementedException
+from cs3client.config import Config
 
 
 class StatusCodeHandler:
