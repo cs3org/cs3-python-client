@@ -14,6 +14,7 @@ from unittest.mock import Mock, patch
 from configparser import ConfigParser
 import base64
 import json
+import cs3.rpc.v1beta1.code_pb2 as cs3code
 
 from cs3client.cs3client import CS3Client
 from cs3client.file import File
@@ -86,6 +87,12 @@ def mock_status_code_handler(mock_logger, mock_config):
 def mock_gateway(mock_gateway_stub_class):
     mock_gateway_stub = Mock()
     mock_gateway_stub_class.return_value = mock_gateway_stub
+    mocked_token = create_mock_jwt()
+    mock_authenticate_response = Mock()
+    mock_authenticate_response.status.code = cs3code.CODE_OK
+    mock_authenticate_response.status.message = ""
+    mock_authenticate_response.token = mocked_token
+    mock_gateway_stub.Authenticate.return_value = mock_authenticate_response
     return mock_gateway_stub
 
 
