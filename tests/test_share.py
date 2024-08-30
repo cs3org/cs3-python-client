@@ -14,14 +14,15 @@ import cs3.sharing.collaboration.v1beta1.resources_pb2 as cs3scr
 import cs3.sharing.link.v1beta1.link_api_pb2 as cs3slapi
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 import cs3.rpc.v1beta1.code_pb2 as cs3code
-from exceptions.exceptions import (
+
+from cs3client.exceptions.exceptions import (
     AuthenticationException,
     NotFoundException,
     UnknownException,
     FileLockedException,
     AlreadyExistsException,
 )
-from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
+from .fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
     mock_config,
     mock_logger,
     mock_gateway,

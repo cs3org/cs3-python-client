@@ -10,9 +10,9 @@ import logging
 import cs3.rpc.v1beta1.code_pb2 as cs3code
 import cs3.rpc.v1beta1.status_pb2 as cs3status
 
-from exceptions.exceptions import AuthenticationException, NotFoundException, \
+from .exceptions.exceptions import AuthenticationException, NotFoundException, \
     UnknownException, AlreadyExistsException, FileLockedException, UnimplementedException
-from config import Config
+from .config import Config
 
 
 class StatusCodeHandler:

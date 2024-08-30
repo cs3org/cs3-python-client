@@ -18,9 +18,9 @@ import cs3.sharing.link.v1beta1.resources_pb2 as cs3slr
 import google.protobuf.field_mask_pb2 as field_masks
 import cs3.types.v1beta1.types_pb2 as cs3types
 
-from cs3resource import Resource
-from config import Config
-from statuscodehandler import StatusCodeHandler
+from .cs3resource import Resource
+from .config import Config
+from .statuscodehandler import StatusCodeHandler
 
 
 class Share:

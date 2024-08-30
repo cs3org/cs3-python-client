@@ -12,19 +12,18 @@ Last updated: 30/08/2024
 import pytest
 from unittest.mock import Mock, patch
 from configparser import ConfigParser
-import cs3.rpc.v1beta1.code_pb2 as cs3code
 import base64
 import json
 
-from cs3client import CS3Client
-from file import File
-from auth import Auth
-from user import User
-from statuscodehandler import StatusCodeHandler
-from share import Share
-from app import App
-from checkpoint import Checkpoint
-from config import Config
+from cs3client.cs3client import CS3Client
+from cs3client.file import File
+from cs3client.auth import Auth
+from cs3client.user import User
+from cs3client.statuscodehandler import StatusCodeHandler
+from cs3client.share import Share
+from cs3client.app import App
+from cs3client.checkpoint import Checkpoint
+from cs3client.config import Config
 
 
 @pytest.fixture
@@ -87,13 +86,6 @@ def mock_status_code_handler(mock_logger, mock_config):
 def mock_gateway(mock_gateway_stub_class):
     mock_gateway_stub = Mock()
     mock_gateway_stub_class.return_value = mock_gateway_stub
-    # Set up mock response for Authenticate method
-    mocked_token = create_mock_jwt()
-    mock_authenticate_response = Mock()
-    mock_authenticate_response.status.code = cs3code.CODE_OK
-    mock_authenticate_response.status.message = ""
-    mock_authenticate_response.token = mocked_token
-    mock_gateway_stub.Authenticate.return_value = mock_authenticate_response
     return mock_gateway_stub
 
 
@@ -118,7 +110,6 @@ def cs3_client_secure(
 
     # Create CS3Client instance
     client = CS3Client(mock_config, "cs3client", mock_logger)
-    client.auth.set_client_secret("test")
 
     assert mock_secure_channel.called
     assert mock_channel_ready_future.called
@@ -150,7 +141,6 @@ def cs3_client_insecure(
 
     # Create CS3Client instance
     client = CS3Client(mock_config, "cs3client", mock_logger)
-    client.auth.set_client_secret("test")
 
     assert mock_insecure_channel.called
     assert mock_channel_ready_future.called

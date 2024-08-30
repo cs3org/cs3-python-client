@@ -11,8 +11,8 @@ import cs3.identity.user.v1beta1.resources_pb2 as cs3iur
 import cs3.identity.user.v1beta1.user_api_pb2 as cs3iu
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 
-from config import Config
-from statuscodehandler import StatusCodeHandler
+from .config import Config
+from .statuscodehandler import StatusCodeHandler
 
 
 class User:

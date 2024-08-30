@@ -10,7 +10,8 @@ Last updated: 26/07/2024
 
 import unittest
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
-from cs3resource import Resource
+
+from cs3client.cs3resource import Resource
 
 
 class TestResource(unittest.TestCase):

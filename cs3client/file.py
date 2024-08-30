@@ -3,7 +3,7 @@ file.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 29/08/2024
+Last updated: 30/08/2024
 """
 
 import time
@@ -16,10 +16,10 @@ import cs3.storage.provider.v1beta1.provider_api_pb2 as cs3sp
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 import cs3.types.v1beta1.types_pb2 as types
 
-from config import Config
-from exceptions.exceptions import AuthenticationException, FileLockedException
-from cs3resource import Resource
-from statuscodehandler import StatusCodeHandler
+from .config import Config
+from .exceptions.exceptions import AuthenticationException, FileLockedException
+from .cs3resource import Resource
+from .statuscodehandler import StatusCodeHandler
 
 
 class File:

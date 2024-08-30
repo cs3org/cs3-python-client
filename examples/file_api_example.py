@@ -18,9 +18,9 @@ Last updated: 30/08/2024
 
 import logging
 import configparser
-from cs3client import CS3Client
-from cs3resource import Resource
-from auth import Auth
+from cs3client.cs3client import CS3Client
+from cs3client.cs3resource import Resource
+from cs3client.auth import Auth
 
 config = configparser.ConfigParser()
 with open("default.conf") as fdef:

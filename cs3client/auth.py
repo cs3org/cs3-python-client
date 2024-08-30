@@ -15,9 +15,9 @@ from cs3.auth.registry.v1beta1.registry_api_pb2 import ListAuthProvidersRequest
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 from cs3.rpc.v1beta1.code_pb2 import CODE_OK
 
-from cs3client import CS3Client
-from exceptions.exceptions import AuthenticationException, SecretNotSetException
-from config import Config
+from .cs3client import CS3Client
+from .exceptions.exceptions import AuthenticationException, SecretNotSetException
+from .config import Config
 
 
 class Auth:

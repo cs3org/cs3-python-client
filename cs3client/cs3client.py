@@ -11,13 +11,13 @@ import logging
 import cs3.gateway.v1beta1.gateway_api_pb2_grpc as cs3gw_grpc
 from configparser import ConfigParser
 
-from file import File
-from user import User
-from share import Share
-from statuscodehandler import StatusCodeHandler
-from app import App
-from checkpoint import Checkpoint
-from config import Config
+from .file import File
+from .user import User
+from .share import Share
+from .statuscodehandler import StatusCodeHandler
+from .app import App
+from .checkpoint import Checkpoint
+from .config import Config
 
 
 class CS3Client:

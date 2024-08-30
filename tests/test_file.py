@@ -11,14 +11,15 @@ Last updated: 30/08/2024
 import pytest
 from unittest.mock import Mock, patch
 import cs3.rpc.v1beta1.code_pb2 as cs3code
-from cs3resource import Resource
-from exceptions.exceptions import (
+
+from cs3client.cs3resource import Resource
+from cs3client.exceptions.exceptions import (
     AuthenticationException,
     NotFoundException,
     FileLockedException,
     UnknownException,
 )
-from fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
+from .fixtures import (  # noqa: F401 (they are used, the framework is not detecting it)
     mock_config,
     mock_logger,
     mock_gateway,

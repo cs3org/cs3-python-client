@@ -12,9 +12,9 @@ import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 import cs3.storage.provider.v1beta1.provider_api_pb2 as cs3spp
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 
-from config import Config
-from statuscodehandler import StatusCodeHandler
-from cs3resource import Resource
+from .config import Config
+from .statuscodehandler import StatusCodeHandler
+from .cs3resource import Resource
 
 
 class Checkpoint:

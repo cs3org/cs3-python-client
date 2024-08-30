@@ -13,9 +13,9 @@ import cs3.gateway.v1beta1.gateway_api_pb2 as cs3gw
 import cs3.app.provider.v1beta1.resources_pb2 as cs3apr
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 
-from cs3resource import Resource
-from statuscodehandler import StatusCodeHandler
-from config import Config
+from .cs3resource import Resource
+from .statuscodehandler import StatusCodeHandler
+from .config import Config
 
 
 class App:

@@ -115,8 +115,8 @@ To use `cs3client`, you first need to import and configure it. Here's a simple e
 ```python
 import logging
 import configparser
-from cs3client import CS3Client
-from auth import Auth
+from cs3client.cs3client import CS3Client
+from cs3client.auth import Auth
 
 config = configparser.ConfigParser()
 with open("default.conf") as fdef:

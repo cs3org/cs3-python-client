@@ -8,7 +8,7 @@ Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@c
 Last updated: 30/08/2024
 """
 
-from fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
+from .fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
     cs3_client_insecure,
     cs3_client_secure,
     mock_config,
