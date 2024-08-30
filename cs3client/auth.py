@@ -37,19 +37,30 @@ class Auth:
         self._gateway: GatewayAPIStub = cs3_client._gateway
         self._log: logging.Logger = cs3_client._log
         self._config: Config = cs3_client._config
-        # The user should be able to change the client secret (e.g. token) at runtime
-        self._client_secret: str | None = None
+        # The user should be able to change the client secret (e.g. token) and client id at runtime
+        self._client_secret: str | None = self._config.auth_client_secret
+        self._client_id: str | None = self._config.auth_client_id
         self._token: str | None = None
 
     def set_client_secret(self, token: str) -> None:
         """
         Sets the client secret, exists so that the user can change the client secret (e.g. token, password) at runtime,
-        without having to create a new Auth object. NOTE that token OR the client secret has to be set when
-        instantiating the client object.
+        without having to create a new Auth object. Note client secret has to be set when
+        instantiating the client object or through the configuration.
 
         :param token: Auth token/password.
         """
         self._client_secret = token
+
+    def set_client_id(self, id: str) -> None:
+        """
+        Sets the client id, exists so that the user can change the client id at runtime, without having to create
+        a new Auth object. Settings this (either through config or here) is optional unless you are using
+        basic authentication.
+
+        :param token: id.
+        """
+        self._client_id = id
 
     def get_token(self) -> tuple[str, str]:
         """
@@ -72,19 +83,22 @@ class Auth:
             # Token has expired or has not been set, obtain another one.
             req = AuthenticateRequest(
                 type=self._config.auth_login_type,
-                client_id=self._config.auth_client_id,
+                client_id=self._client_id,
                 client_secret=self._client_secret,
             )
             # Send the authentication request to the CS3 Gateway
             res = self._gateway.Authenticate(req)
 
             if res.status.code != CODE_OK:
-                self._log.error(f"Failed to authenticate user {self._config.auth_client_id}, error: {res.status}")
+                self._log.error(f'msg="Failed to authenticate" '
+                                f'user="{self._client_id if self._client_id else "no_id_set"}" '
+                                f'error_code="{res.status}"')
                 raise AuthenticationException(
-                    f"Failed to authenticate user {self._config.auth_client_id}, error: {res.status}"
+                    f'Failed to authenticate: user="{self._client_id if self._client_id else "no_id_set"}" '
+                    f'error_code="{res.status}"'
                 )
             self._token = res.token
-        self._log.debug(f'msg="Authenticated user" user="{self._config.auth_client_id}"')
+        self._log.debug(f'msg="Authenticated user" user="{self._client_id if self._client_id else "no_id_set"}"')
         return ("x-access-token", self._token)
 
     def list_auth_providers(self) -> list[str]:
@@ -97,7 +111,7 @@ class Auth:
         try:
             res = self._gateway.ListAuthProviders(request=ListAuthProvidersRequest())
             if res.status.code != CODE_OK:
-                self._log.error(f"List auth providers request failed, error: {res.status}")
+                self._log.error(f'msg="List auth providers request failed" error_code="{res.status}"')
                 raise Exception(res.status.message)
         except grpc.RpcError as e:
             self._log.error("List auth providers request failed")

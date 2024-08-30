@@ -21,6 +21,8 @@ log = logging.getLogger(__name__)
 
 client = CS3Client(config, "cs3client", log)
 auth = Auth(client)
+# Set the client id (can also be set in the config)
+auth.set_client_id("<your_client_id_here>")
 # Set client secret (can also be set in config)
 auth.set_client_secret("<your_client_secret_here>")
 # Checks if token is expired if not return ('x-access-token', <token>)

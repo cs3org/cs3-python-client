@@ -88,12 +88,14 @@ ssl_verify = False
 # Optional, defaults to an empty string
 ssl_client_cert = test_client_cert
 # Optional, defaults to an empty string
-ssl_client_key  = test_client_key
+ssl_client_key = test_client_key
 # Optional, defaults to an empty string
-ssl_ca_cert =  test_ca_cert
+ssl_ca_cert = test_ca_cert
 
 # Optinal, defaults to an empty string
 auth_client_id = einstein
+# Optional (can also be set when instansiating the class)
+auth_client_secret = relativity
 # Optional, defaults to basic
 auth_login_type = basic
 
@@ -125,6 +127,8 @@ log = logging.getLogger(__name__)
 
 client = CS3Client(config, "cs3client", log)
 auth = Auth(client)
+# Set the client id (can also be set in the config)
+auth.set_client_id("<your_client_id_here>")
 # Set client secret (can also be set in config)
 auth.set_client_secret("<your_client_secret_here>")
 # Checks if token is expired if not return ('x-access-token', <token>)

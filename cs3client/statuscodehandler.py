@@ -22,44 +22,44 @@ class StatusCodeHandler:
 
     def _log_not_found_info(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
         self._log.info(
-            f'msg="Not found on {operation}" {msg + " " if msg else ""}'
-            f'userid="{self._config.auth_client_id}" trace="{status.trace}" '
-            f'reason="{status.message.replace('"', "'")}"'
+            f'msg="Not found on {operation}" {msg + " " if msg else ""} '
+            f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
+            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
         )
 
     def _log_authentication_error(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
         self._log.error(
             f'msg="Authentication failed on {operation}" {msg + " " if msg else ""}'
-            f'userid="{self._config.auth_client_id}" trace="{status.trace}" '
-            f'reason="{status.message.replace('"', "'")}"'
+            f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
+            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
         )
 
     def _log_unknown_error(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
         self._log.error(
             f'msg="Failed to {operation}, unknown error" {msg + " " if msg else ""}'
-            f'userid="{self._config.auth_client_id}" trace="{status.trace}" '
-            f'reason="{status.message.replace('"', "'")}"'
+            f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
+            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
         )
 
     def _log_precondition_info(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
         self._log.info(
             f'msg="Failed precondition on {operation}" {msg + " " if msg else ""}'
-            f'userid="{self._config.auth_client_id}" trace="{status.trace}" '
-            f'reason="{status.message.replace('"', "'")}"'
+            f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
+            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
         )
 
     def _log_already_exists(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
         self._log.info(
             f'msg="Already exists on {operation}" {msg + " " if msg else ""}'
-            f'userid="{self._config.auth_client_id}" trace="{status.trace}" '
-            f'reason="{status.message.replace('"', "'")}"'
+            f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
+            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
         )
 
     def _log_unimplemented(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
         self._log.info(
             f'msg="Invoked {operation} on unimplemented feature" {msg + " " if msg else ""}'
-            f'userid="{self._config.auth_client_id}" trace="{status.trace}" '
-            f'reason="{status.message.replace('"', "'")}"'
+            f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
+            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
         )
 
     def handle_errors(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
