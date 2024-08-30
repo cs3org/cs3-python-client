@@ -13,76 +13,82 @@ text_file.txt
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 01/08/2024
+Last updated: 30/08/2024
 """
 
 import logging
 import configparser
 from cs3client import CS3Client
 from cs3resource import Resource
+from auth import Auth
 
 config = configparser.ConfigParser()
 with open("default.conf") as fdef:
     config.read_file(fdef)
-# log
 log = logging.getLogger(__name__)
 
 client = CS3Client(config, "cs3client", log)
-client.auth.set_token("<your_token_here>")
-# OR
-# client.auth.set_client_secret("<your_client_secret_here>")
+auth = Auth(client)
+# Set client secret (can also be set in config)
+auth.set_client_secret("<your_client_secret_here>")
+# Checks if token is expired if not return ('x-access-token', <token>)
+# if expired, request a new token from reva
+auth_token = auth.get_token()
 
-# Authentication
-print(client.auth.get_token())
+# OR if you already have a reva token
+# Checks if token is expired if not return (x-access-token', <token>)
+# if expired, throws an AuthenticationException (so you can refresh your reva token)
+token = "<your_reva_token>"
+auth_token = Auth.check_token(token)
 
 res = None
 
 # mkdir
 for i in range(1, 4):
     directory_resource = Resource.from_file_ref_and_endpoint(f"/eos/user/r/rwelande/test_directory{i}")
-    res = client.file.make_dir(directory_resource)
+    res = client.file.make_dir(auth.get_token(), directory_resource)
     if res is not None:
         print(res)
 
 # touchfile
 touch_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/touch_file.txt")
 text_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/text_file.txt")
-res = client.file.touch_file(touch_resource)
-res = client.file.touch_file(text_resource)
+res = client.file.touch_file(auth.get_token(), touch_resource)
+res = client.file.touch_file(auth.get_token(), text_resource)
 
 if res is not None:
     print(res)
 
 # setxattr
 resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/text_file.txt")
-res = client.file.set_xattr(resource, "iop.wopi.lastwritetime", str(1720696124))
+res = client.file.set_xattr(auth.get_token(), resource, "iop.wopi.lastwritetime", str(1720696124))
 
 if res is not None:
     print(res)
 
 # rmxattr
-res = client.file.remove_xattr(resource, "iop.wopi.lastwritetime")
+res = client.file.remove_xattr(auth.get_token(), resource, "iop.wopi.lastwritetime")
 
 if res is not None:
     print(res)
 
 # stat
-res = client.file.stat(text_resource)
+res = client.file.stat(auth.get_token(), text_resource)
 
 if res is not None:
     print(res)
 
 # removefile
-res = client.file.remove_file(touch_resource)
+res = client.file.remove_file(auth.get_token(), touch_resource)
 
 if res is not None:
     print(res)
 
-res = client.file.touch_file(touch_resource)
+res = client.file.touch_file(auth.get_token(), touch_resource)
 
 # rename
 rename_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/rename_file.txt")
-res = client.file.rename_file(resource, rename_resource)
+res = client.file.rename_file(auth.get_token(), resource, rename_resource)
 
 if res is not None:
     print(res)
@@ -90,20 +96,20 @@ if res is not None:
 # writefile
 content = b"Hello World"
 size = len(content)
-res = client.file.write_file(rename_resource, content, size)
+res = client.file.write_file(auth.get_token(), rename_resource, content, size)
 
 if res is not None:
     print(res)
 
 # rmdir (same as deletefile)
-res = client.file.remove_file(directory_resource)
+res = client.file.remove_file(auth.get_token(), directory_resource)
 
 if res is not None:
     print(res)
 
 # listdir
 list_directory_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande")
-res = client.file.list_dir(list_directory_resource)
+res = client.file.list_dir(auth.get_token(), list_directory_resource)
 
 first_item = next(res, None)
 if first_item is not None:
@@ -114,7 +120,7 @@ else:
     print("empty response")
 
 # readfile
-file_res = client.file.read_file(rename_resource)
+file_res = client.file.read_file(auth.get_token(), rename_resource)
 content = b""
 try:
     for chunk in file_res:

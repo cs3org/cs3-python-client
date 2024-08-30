@@ -1,5 +1,5 @@
 """
-file_api_example.py
+auth_example.py
 
 Example script to demonstrate the usage of the app API in the CS3Client class.
 note that these are examples, and is not meant to be run as a script.
@@ -11,7 +11,6 @@ Last updated: 30/08/2024
 
 import logging
 import configparser
-from cs3resource import Resource
 from cs3client import CS3Client
 from auth import Auth
 
@@ -33,14 +32,3 @@ auth_token = auth.get_token()
 # if expired, throws an AuthenticationException (so you can refresh your reva token)
 token = "<your_reva_token>"
 auth_token = Auth.check_token(token)
-
-# list_app_providers
-res = client.app.list_app_providers(auth.get_token())
-if res is not None:
-    print(res)
-
-# open_in_app
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/collabora.odt")
-res = client.app.open_in_app(auth.get_token(), resource)
-if res is not None:
-    print(res)
