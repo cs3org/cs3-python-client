@@ -183,6 +183,46 @@ res = client.file.list_dir(auth.get_token(), list_directory_resource)
 # readfile
 file_res = client.file.read_file(auth.get_token(), rename_resource)
 ```
+### Lock Example
+```python
+
+WEBDAV_LOCK_PREFIX = 'opaquelocktoken:797356a8-0500-4ceb-a8a0-c94c8cde7eba'
+
+
+def encode_lock(lock):
+    '''Generates the lock payload for the storage given the raw metadata'''
+    if lock:
+        return WEBDAV_LOCK_PREFIX + ' ' + b64encode(lock.encode()).decode()
+    return None
+
+resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/lock_test.txt")
+
+# Set lock
+client.file.set_lock(auth_token, resource, app_name="a", lock_id=encode_lock("some_lock"))
+
+# Get lock
+res = client.file.get_lock(auth_token, resource)
+if res is not None:
+    lock_id = res["lock_id"]
+    print(res)
+
+# Unlock
+res = client.file.unlock(auth_token, resource, app_name="a", lock_id=lock_id)
+
+# Refresh lock
+client.file.set_lock(auth_token, resource, app_name="a", lock_id=encode_lock("some_lock"))
+res = client.file.refresh_lock(
+    auth_token, resource, app_name="a", lock_id=encode_lock("new_lock"), existing_lock_id=lock_id
+)
+
+if res is not None:
+    print(res)
+
+res = client.file.get_lock(auth_token, resource)
+if res is not None:
+    print(res)
+
+```
 
 ### Share Example
 ```python
