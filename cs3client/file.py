@@ -10,6 +10,7 @@ import time
 import logging
 import http
 import requests
+from typing import Union
 from typing import Generator
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 import cs3.storage.provider.v1beta1.provider_api_pb2 as cs3sp
@@ -169,7 +170,8 @@ class File:
         self._log.debug(f'msg="Invoked TouchFile" trace="{res.status.trace}"')
 
     def write_file(
-            self, auth_token: tuple, resource: Resource, content: str | bytes, size: int, lock_md: tuple = ('', '')
+            self, auth_token: tuple, resource: Resource, content: Union[str, bytes], size: int,
+            lock_md: tuple = ('', '')
     ) -> None:
         """
         Write a file using the given userid as access token. The entire content is written
@@ -307,9 +309,11 @@ class File:
             raise IOError(e)
         data = fileget.iter_content(self._config.chunk_size)
         if fileget.status_code != http.client.OK:
+            # status.message.replace('"', "'") is not allowed inside f strings python<3.12
+            status_msg = fileget.reason.replace('"', "'")
             self._log.error(
                 f'msg="Error downloading file from Reva" code="{fileget.status_code}" '
-                f'reason="{fileget.reason.replace('"', "'")}"'
+                f'reason="{status_msg}"'
             )
             raise IOError(fileget.reason)
         else:
@@ -355,7 +359,7 @@ class File:
         for info in res.infos:
             yield info
 
-    def _set_lock_using_xattr(self, auth_token, resource: Resource, app_name: str, lock_id: int | str) -> None:
+    def _set_lock_using_xattr(self, auth_token, resource: Resource, app_name: str, lock_id: Union[int, str]) -> None:
         """"
         Set a lock to a resource with the given value metadata and appname as holder
 
@@ -377,7 +381,7 @@ class File:
             self.set_xattr(auth_token, resource, LOCK_ATTR_KEY, f"{app_name}!{lock_id}!{expiration}", None)
             return
 
-    def set_lock(self, auth_token: tuple, resource: Resource, app_name: str, lock_id: int | str) -> None:
+    def set_lock(self, auth_token: tuple, resource: Resource, app_name: str, lock_id: Union[int, str]) -> None:
         """
         Set a lock to a resource with the given value and appname as holder
 
@@ -440,7 +444,7 @@ class File:
         except KeyError:
             return None
 
-    def get_lock(self, auth_token: tuple, resource: Resource) -> cs3spr.Lock | dict | None:
+    def get_lock(self, auth_token: tuple, resource: Resource) -> Union[cs3spr.Lock, dict, None]:
         """
         Get the lock for the given filepath
 
@@ -481,7 +485,8 @@ class File:
         }
 
     def _refresh_lock_using_xattr(
-            self, auth_token: tuple, resource: Resource, app_name: str, lock_id: str | int, existing_lock_id: str | int = None
+            self, auth_token: tuple, resource: Resource, app_name: str, lock_id: Union[str, int],
+            existing_lock_id: Union[str, int] = None
     ) -> None:
         """
         Refresh the lock metadata for the given filepath
@@ -516,8 +521,8 @@ class File:
             return
 
     def refresh_lock(
-            self, auth_token: tuple, resource: Resource, app_name: str, lock_id: str | int,
-            existing_lock_id: str | int = None
+            self, auth_token: tuple, resource: Resource, app_name: str, lock_id: Union[str, int],
+            existing_lock_id: Union[str, int] = None
     ):
         """
         Refresh the lock for the given filepath
@@ -556,7 +561,9 @@ class File:
         self._log.debug(f'msg="Invoked RefreshLock" {resource.get_file_ref_str()} result="{res.status.trace}" '
                         f'value="{lock_id}" old_value="{existing_lock_id}"')
 
-    def _unlock_using_xattr(self, auth_token: tuple, resource: Resource, app_name: str, lock_id: str | int) -> None:
+    def _unlock_using_xattr(
+            self, auth_token: tuple, resource: Resource, app_name: str, lock_id: Union[str, int]
+    ) -> None:
         """
         Remove the lock for the given filepath
 
@@ -587,7 +594,7 @@ class File:
             self.remove_xattr(auth_token, resource, LOCK_ATTR_KEY, None)
             return
 
-    def unlock(self, auth_token: tuple, resource: Resource, app_name, lock_id: str | int):
+    def unlock(self, auth_token: tuple, resource: Resource, app_name, lock_id: Union[str, int]):
         """
         Remove the lock for the given filepath
 

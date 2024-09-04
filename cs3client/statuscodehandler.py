@@ -20,57 +20,65 @@ class StatusCodeHandler:
         self._log = log
         self._config = config
 
-    def _log_not_found_info(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
+    def _log_not_found_info(self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None) -> None:
         self._log.info(
             f'msg="Not found on {operation}" {msg + " " if msg else ""} '
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
-            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
+            f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def _log_authentication_error(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
+    def _log_authentication_error(
+            self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None
+    ) -> None:
         self._log.error(
             f'msg="Authentication failed on {operation}" {msg + " " if msg else ""}'
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
-            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
+            f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def _log_unknown_error(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
+    def _log_unknown_error(self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None) -> None:
         self._log.error(
             f'msg="Failed to {operation}, unknown error" {msg + " " if msg else ""}'
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
-            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
+            f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def _log_precondition_info(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
+    def _log_precondition_info(
+            self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None
+    ) -> None:
         self._log.info(
             f'msg="Failed precondition on {operation}" {msg + " " if msg else ""}'
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
-            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
+            f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def _log_already_exists(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
+    def _log_already_exists(self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None) -> None:
         self._log.info(
             f'msg="Already exists on {operation}" {msg + " " if msg else ""}'
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
-            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
+            f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def _log_unimplemented(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
+    def _log_unimplemented(self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None) -> None:
         self._log.info(
             f'msg="Invoked {operation} on unimplemented feature" {msg + " " if msg else ""}'
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
-            f'trace="{status.trace}" reason="{status.message.replace('"', "'")}"'
+            f'trace="{status.trace}" reason="{status_msg}"'
         )
 
     def handle_errors(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
+
         if status.code == cs3code.CODE_OK:
             return
+        # status.message.replace('"', "'") is not allowed inside f strings python<3.12
+        status_message = status.message.replace('"', "'")
+
         if status.code == cs3code.CODE_FAILED_PRECONDITION or status.code == cs3code.CODE_ABORTED:
-            self._log_precondition_info(status, operation, msg)
+            self._log_precondition_info(status, operation, status_message, msg)
             raise FileLockedException(f'Failed precondition: operation="{operation}" '
                                       f'status_code="{status.code}"  message="{status.message}"')
         if status.code == cs3code.CODE_ALREADY_EXISTS:
-            self._log_already_exists(status, operation, msg)
+            self._log_already_exists(status, operation, status_message, msg)
             raise AlreadyExistsException(f'Resource already exists: operation="{operation}" '
                                          f'status_code="{status.code}" message="{status.message}"')
         if status.code == cs3code.CODE_UNIMPLEMENTED:
@@ -78,11 +86,11 @@ class StatusCodeHandler:
             raise UnimplementedException(f'Unimplemented feature: operation="{operation}" '
                                          f'status_code="{status.code}" message="{status.message}"')
         if status.code == cs3code.CODE_NOT_FOUND:
-            self._log_not_found_info(status, operation, msg)
+            self._log_not_found_info(status, operation, status_message, msg)
             raise NotFoundException(f'Not found: operation="{operation}" '
                                     f'status_code="{status.code}" message="{status.message}"')
         if status.code == cs3code.CODE_UNAUTHENTICATED:
-            self._log_authentication_error(status, operation, msg)
+            self._log_authentication_error(status, operation, status_message, msg)
             raise AuthenticationException(f'Operation not permitted: operation="{operation}" '
                                           f'status_code="{status.code}" message="{status.message}"')
         if status.code != cs3code.CODE_OK:
@@ -90,8 +98,8 @@ class StatusCodeHandler:
                 self._log.info(f'msg="Invoked {operation} on missing file" ')
                 raise NotFoundException(
                     message=f'No such file or directory: operation="{operation}" '
-                            f'status_code="{status.code}"  message="{status.message}"'
+                            f'status_code="{status.code}" message="{status.message}"'
                 )
-            self._log_unknown_error(status, operation, msg)
+            self._log_unknown_error(status, operation, status_message, msg)
             raise UnknownException(f'Unknown Error: operation="{operation}" status_code="{status.code}" '
                                    f'message="{status.message}"')

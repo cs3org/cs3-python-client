@@ -7,6 +7,7 @@ Last updated: 19/08/2024
 """
 
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
+from typing import Union
 
 
 class Resource:
@@ -26,12 +27,12 @@ class Resource:
 
     def __init__(
         self,
-        abs_path: str | None = None,
-        rel_path: str | None = None,
-        opaque_id: str | None = None,
-        parent_id: str | None = None,
-        storage_id: str | None = None,
-        space_id: str | None = None,
+        abs_path: Union[str, None] = None,
+        rel_path: Union[str, None] = None,
+        opaque_id: Union[str, None] = None,
+        parent_id: Union[str, None] = None,
+        storage_id: Union[str, None] = None,
+        space_id: Union[str, None] = None,
     ) -> None:
         """
         initializes the Resource class, either abs_path, rel_path or opaque_id is required
@@ -45,15 +46,15 @@ class Resource:
         :param storage_id: storage id (optional)
         :param space_id: space id (optional)
         """
-        self._abs_path: str | None = abs_path
-        self._rel_path: str | None = rel_path
-        self._parent_id: str | None = parent_id
-        self._opaque_id: str | None = opaque_id
-        self._space_id: str | None = space_id
-        self._storage_id: str | None = storage_id
+        self._abs_path: Union[str, None] = abs_path
+        self._rel_path: Union[str, None] = rel_path
+        self._parent_id: Union[str, None] = parent_id
+        self._opaque_id: Union[str, None] = opaque_id
+        self._space_id: Union[str, None] = space_id
+        self._storage_id: Union[str, None] = storage_id
 
     @classmethod
-    def from_file_ref_and_endpoint(cls, file: str, endpoint: str | None = None) -> "Resource":
+    def from_file_ref_and_endpoint(cls, file: str, endpoint: Union[str, None] = None) -> "Resource":
         """
         Extracts the attributes from the file and endpoint and returns a resource.
 

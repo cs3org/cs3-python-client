@@ -10,6 +10,7 @@ import grpc
 import jwt
 import datetime
 import logging
+from typing import Union
 from cs3.gateway.v1beta1.gateway_api_pb2 import AuthenticateRequest
 from cs3.auth.registry.v1beta1.registry_api_pb2 import ListAuthProvidersRequest
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
@@ -38,9 +39,9 @@ class Auth:
         self._log: logging.Logger = cs3_client._log
         self._config: Config = cs3_client._config
         # The user should be able to change the client secret (e.g. token) and client id at runtime
-        self._client_secret: str | None = self._config.auth_client_secret
-        self._client_id: str | None = self._config.auth_client_id
-        self._token: str | None = None
+        self._client_secret: Union[str, None] = self._config.auth_client_secret
+        self._client_id: Union[str, None] = self._config.auth_client_id
+        self._token: Union[str, None] = None
 
     def set_client_secret(self, token: str) -> None:
         """
