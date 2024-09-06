@@ -37,7 +37,7 @@ auth_token = auth.get_token()
 token = "<your_reva_token>"
 auth_token = Auth.check_token(token)
 
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/lock_test.txt")
+resource = Resource(abs_path="/eos/user/r/rwelande/lock_test.txt")
 
 # Set lock
 client.file.set_lock(auth_token, resource, app_name="a", lock_id="some_lock")

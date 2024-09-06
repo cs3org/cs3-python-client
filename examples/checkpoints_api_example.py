@@ -38,7 +38,7 @@ auth_token = Auth.check_token(token)
 
 res = None
 
-markdown_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/test.md")
+markdown_resource = Resource(abs_path="/eos/user/r/rwelande/test.md")
 
 res = client.checkpoint.list_file_versions(auth.get_token(), markdown_resource)
 

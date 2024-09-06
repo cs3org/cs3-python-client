@@ -47,14 +47,14 @@ res = None
 
 # mkdir
 for i in range(1, 4):
-    directory_resource = Resource.from_file_ref_and_endpoint(f"/eos/user/r/rwelande/test_directory{i}")
+    directory_resource = Resource(abs_path=f"/eos/user/r/rwelande/test_directory{i}")
     res = client.file.make_dir(auth.get_token(), directory_resource)
     if res is not None:
         print(res)
 
 # touchfile
-touch_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/touch_file.txt")
-text_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/text_file.txt")
+touch_resource = Resource(abs_path="/eos/user/r/rwelande/touch_file.txt")
+text_resource = Resource(abs_path="/eos/user/r/rwelande/text_file.txt")
 res = client.file.touch_file(auth.get_token(), touch_resource)
 res = client.file.touch_file(auth.get_token(), text_resource)
 
@@ -62,7 +62,7 @@ if res is not None:
     print(res)
 
 # setxattr
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/text_file.txt")
+resource = Resource(abs_path="/eos/user/r/rwelande/text_file.txt")
 res = client.file.set_xattr(auth.get_token(), resource, "iop.wopi.lastwritetime", str(1720696124))
 
 if res is not None:
@@ -89,7 +89,7 @@ if res is not None:
 res = client.file.touch_file(auth.get_token(), touch_resource)
 
 # rename
-rename_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/rename_file.txt")
+rename_resource = Resource(abs_path="/eos/user/r/rwelande/rename_file.txt")
 res = client.file.rename_file(auth.get_token(), resource, rename_resource)
 
 if res is not None:
@@ -110,7 +110,7 @@ if res is not None:
     print(res)
 
 # listdir
-list_directory_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande")
+list_directory_resource = Resource(abs_path="/eos/user/r/rwelande")
 res = client.file.list_dir(auth.get_token(), list_directory_resource)
 
 first_item = next(res, None)

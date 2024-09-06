@@ -146,15 +146,15 @@ auth_token = Auth.check_token(token)
 ### File Example
 ```python
 # mkdir
-directory_resource = Resource.from_file_ref_and_endpoint(f"/eos/user/r/rwelande/test_directory")
+directory_resource = Resource(abs_path=f"/eos/user/r/rwelande/test_directory")
 res = client.file.make_dir(auth.get_token(), directory_resource)
 
 # touchfile
-touch_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/touch_file.txt")
+touch_resource = Resource(abs_path="/eos/user/r/rwelande/touch_file.txt")
 res = client.file.touch_file(auth.get_token(), touch_resource)
 
 # setxattr
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/text_file.txt")
+resource = Resource(abs_path="/eos/user/r/rwelande/text_file.txt")
 res = client.file.set_xattr(auth.get_token(), resource, "iop.wopi.lastwritetime", str(1720696124))
 
 # rmxattr
@@ -167,7 +167,7 @@ res = client.file.stat(auth.get_token(), resource)
 res = client.file.remove_file(auth.get_token(), touch_resource)
 
 # rename
-rename_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/rename_file.txt")
+rename_resource = Resource(abs_path="/eos/user/r/rwelande/rename_file.txt")
 res = client.file.rename_file(auth.get_token(), resource, rename_resource)
 
 # writefile
@@ -176,7 +176,7 @@ size = len(content)
 res = client.file.write_file(auth.get_token(), rename_resource, content, size)
 
 # listdir
-list_directory_resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande")
+list_directory_resource = Resource(abs_path="/eos/user/r/rwelande")
 res = client.file.list_dir(auth.get_token(), list_directory_resource)
 
 
@@ -195,7 +195,7 @@ def encode_lock(lock):
         return WEBDAV_LOCK_PREFIX + ' ' + b64encode(lock.encode()).decode()
     return None
 
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/lock_test.txt")
+resource = Resource(abs_path="/eos/user/r/rwelande/lock_test.txt")
 
 # Set lock
 client.file.set_lock(auth_token, resource, app_name="a", lock_id=encode_lock("some_lock"))
@@ -227,7 +227,7 @@ if res is not None:
 ### Share Example
 ```python
 # Create share #
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/<some_username>/text.txt")
+resource = Resource(abs_path="/eos/user/r/<some_username>/text.txt")
 resource_info = client.file.stat(auth.get_token(), resource)
 user = client.user.get_user_by_claim("username", "<some_username>")
 res = client.share.create_share(auth.get_token(), resource_info, user.id.opaque_id, user.id.idp, "EDITOR", "USER")
@@ -308,14 +308,14 @@ res = client.user.get_user_by_claim("username", "rwelande")
 res = client.app.list_app_providers(auth.get_token())
 
 # open_in_app
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/collabora.odt")
+resource = Resource(abs_path="/eos/user/r/rwelande/collabora.odt")
 res = client.app.open_in_app(auth.get_token(), resource)
 ```
 
 ### Checkpoint Example
 ```python
 # list file versions
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/test.md")
+resource = Resource(abs_path="/eos/user/r/rwelande/test.md")
 res = client.checkpoint.list_file_versions(auth.get_token(), resource)
 
 # restore file version

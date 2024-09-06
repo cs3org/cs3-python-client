@@ -42,7 +42,7 @@ if res is not None:
     print(res)
 
 # open_in_app
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/collabora.odt")
+resource = Resource(abs_path="/eos/user/r/rwelande/collabora.odt")
 res = client.app.open_in_app(auth.get_token(), resource)
 if res is not None:
     print(res)

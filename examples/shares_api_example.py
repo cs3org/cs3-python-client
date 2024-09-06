@@ -39,7 +39,7 @@ auth_token = Auth.check_token(token)
 res = None
 
 # Create share #
-resource = Resource.from_file_ref_and_endpoint("/eos/user/r/rwelande/text.txt")
+resource = Resource(abs_path="/eos/user/r/rwelande/text.txt")
 resource_info = client.file.stat(auth.get_token(), resource)
 
 # VIEWER
