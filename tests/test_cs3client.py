@@ -5,14 +5,10 @@ Tests the initialization of the CS3Client class.
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 26/07/2024
+Last updated: 30/08/2024
 """
 
-import sys
-
-sys.path.append("src/")
-
-from fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
+from .fixtures import (  # noqa: F401, E402 (they are used, the framework is not detecting it)
     cs3_client_insecure,
     cs3_client_secure,
     mock_config,
@@ -20,6 +16,8 @@ from fixtures import (  # noqa: F401, E402 (they are used, the framework is not 
     mock_gateway,
     create_mock_jwt,
 )
+
+# Test cases for the cs3client class.
 
 
 def test_cs3client_initialization_secure(cs3_client_secure):  # noqa: F811 (not a redefinition)
@@ -45,17 +43,10 @@ def test_cs3client_initialization_secure(cs3_client_secure):  # noqa: F811 (not 
     # Make sure the gRPC channel is correctly created
     assert client.channel is not None
     assert client._gateway is not None
-    assert client.auth is not None
     assert client.file is not None
-
-    # Make sure auth objects are correctly set
-    assert client.auth._gateway is not None
-    assert client.auth._config is not None
-    assert client.auth._log is not None
 
     # Make sure file objects are correctly set
     assert client.file._gateway is not None
-    assert client.file._auth is not None
     assert client.file._config is not None
     assert client.file._log is not None
 
@@ -83,16 +74,9 @@ def test_cs3client_initialization_insecure(cs3_client_insecure):  # noqa: F811 (
     # Make sure the gRPC channel is correctly created
     assert client.channel is not None
     assert client._gateway is not None
-    assert client.auth is not None
     assert client.file is not None
-
-    # Make sure auth objects are correctly set
-    assert client.auth._gateway is not None
-    assert client.auth._config is not None
-    assert client.auth._log is not None
 
     # Make sure file objects are correctly set
     assert client.file._gateway is not None
-    assert client.file._auth is not None
     assert client.file._config is not None
     assert client.file._log is not None

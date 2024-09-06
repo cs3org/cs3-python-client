@@ -3,16 +3,10 @@ share.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 19/08/2024
+Last updated: 30/08/2024
 """
 
 import logging
-from auth import Auth
-from cs3resource import Resource
-from config import Config
-from statuscodehandler import StatusCodeHandler
-
-
 import cs3.sharing.collaboration.v1beta1.collaboration_api_pb2 as cs3scapi
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 import cs3.sharing.collaboration.v1beta1.resources_pb2 as cs3scr
@@ -23,6 +17,10 @@ import cs3.sharing.link.v1beta1.link_api_pb2 as cs3slapi
 import cs3.sharing.link.v1beta1.resources_pb2 as cs3slr
 import google.protobuf.field_mask_pb2 as field_masks
 import cs3.types.v1beta1.types_pb2 as cs3types
+
+from .cs3resource import Resource
+from .config import Config
+from .statuscodehandler import StatusCodeHandler
 
 
 class Share:
@@ -35,7 +33,6 @@ class Share:
         config: Config,
         log: logging.Logger,
         gateway: GatewayAPIStub,
-        auth: Auth,
         status_code_handler: StatusCodeHandler,
     ) -> None:
         """
@@ -44,21 +41,26 @@ class Share:
         :param config: Config object containing the configuration parameters.
         :param log: Logger instance for logging.
         :param gateway: GatewayAPIStub instance for interacting with CS3 Gateway.
-        :param auth: An instance of the auth class.
         :param status_code_handler: An instance of the StatusCodeHandler class.
         """
         self._status_code_handler: StatusCodeHandler = status_code_handler
         self._gateway: GatewayAPIStub = gateway
         self._log: logging.Logger = log
         self._config: Config = config
-        self._auth: Auth = auth
 
     def create_share(
-        self, resource_info: cs3spr.ResourceInfo, opaque_id: str, idp: str, role: str, grantee_type: str
+        self,
+        auth_token: tuple,
+        resource_info: cs3spr.ResourceInfo,
+        opaque_id: str,
+        idp: str,
+        role: str,
+        grantee_type: str
     ) -> cs3scr.Share:
         """
         Create a share for a resource to the user/group with the specified role, using their opaque id and idp.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param resource_info: Resource info, see file.stat (REQUIRED).
         :param opaque_id: Opaque group/user id, (REQUIRED).
         :param idp: Identity provider, (REQUIRED).
@@ -74,7 +76,7 @@ class Share:
         """
         share_grant = Share._create_share_grant(opaque_id, idp, role, grantee_type)
         req = cs3scapi.CreateShareRequest(resource_info=resource_info, grant=share_grant)
-        res = self._gateway.CreateShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.CreateShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status, "create share", f'opaque_id="{opaque_id}" resource_id="{resource_info.id}"'
         )
@@ -85,11 +87,12 @@ class Share:
         return res.share
 
     def list_existing_shares(
-        self, filter_list: list[cs3scr.Filter] = None, page_size: int = 0, page_token: str = None
+        self, auth_token: tuple, filter_list: list[cs3scr.Filter] = None, page_size: int = 0, page_token: str = None
     ) -> list[cs3scr.Share]:
         """
         List shares based on a filter.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param filter: Filter object to filter the shares, see create_share_filter.
         :param page_size: Number of shares to return in a page, defaults to 0, server decides.
         :param page_token: Token to get to a specific page.
@@ -98,7 +101,7 @@ class Share:
         :raises: UnknownException (Unknown error)
         """
         req = cs3scapi.ListSharesRequest(filters=filter_list, page_size=page_size, page_token=page_token)
-        res = self._gateway.ListExistingShares(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.ListExistingShares(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(res.status, "list existing shares", f'filter="{filter_list}"')
         self._log.debug(
             f'msg="Invoked ListExistingShares" filter="{filter_list}" res_count="{len(res.share_infos)}'
@@ -106,11 +109,12 @@ class Share:
         )
         return (res.share_infos, res.next_page_token)
 
-    def get_share(self, opaque_id: str = None, share_key: cs3scr.ShareKey = None) -> cs3scr.Share:
+    def get_share(self, auth_token: tuple, opaque_id: str = None, share_key: cs3scr.ShareKey = None) -> cs3scr.Share:
         """
         Get a share by its opaque id or share key (combination of resource_id, grantee and owner),
         one of them is required.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param opaque_id: Opaque share id (SEMI-OPTIONAL).
         :param share_key: Share key, see ShareKey definition in cs3apis (SEMI-OPTIONAL).
         :return: Share object.
@@ -127,7 +131,7 @@ class Share:
         else:
             raise ValueError("opaque_id or share_key is required")
 
-        res = self._gateway.GetShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.GetShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status, "get share", f'opaque_id/share_key="{opaque_id if opaque_id else share_key}"'
         )
@@ -137,11 +141,12 @@ class Share:
         )
         return res.share
 
-    def remove_share(self, opaque_id: str = None, share_key: cs3scr.ShareKey = None) -> None:
+    def remove_share(self, auth_token: tuple, opaque_id: str = None, share_key: cs3scr.ShareKey = None) -> None:
         """
         Remove a share by its opaque id or share key (combination of resource_id, grantee and owner),
         one of them is required.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param opaque_id: Opaque share id (SEMI-OPTIONAL).
         :param share_key: Share key, see ShareKey definition in cs3apis (SEMI-OPTIONAL).
         :return: None
@@ -157,7 +162,7 @@ class Share:
             req = cs3scapi.RemoveShareRequest(ref=cs3scr.ShareReference(key=share_key))
         else:
             raise ValueError("opaque_id or share_key is required")
-        res = self._gateway.RemoveShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.RemoveShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status, "remove share", f'opaque_id/share_key="{opaque_id if opaque_id else share_key}"'
         )
@@ -168,11 +173,16 @@ class Share:
         return
 
     def update_share(
-        self, role: str, opaque_id: str = None, share_key: cs3scr.ShareKey = None, display_name: str = None
+        self, auth_token: tuple,
+        role: str,
+        opaque_id: str = None,
+        share_key: cs3scr.ShareKey = None,
+        display_name: str = None
     ) -> cs3scr.Share:
         """
         Update a share by its opaque id.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param opaque_id: Opaque share id. (SEMI-OPTIONAL).
         :param share_key: Share key, see ShareKey definition in cs3apis (SEMI-OPTIONAL).
         :param role: Role to update the share, VIEWER or EDITOR (REQUIRED).
@@ -195,7 +205,7 @@ class Share:
             raise ValueError("opaque_id or share_key is required")
 
         req = cs3scapi.UpdateShareRequest(ref=ref, field=update)
-        res = self._gateway.UpdateShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.UpdateShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status, "update share", f'opaque_id/share_key="{opaque_id if opaque_id else share_key}"'
         )
@@ -206,12 +216,13 @@ class Share:
         return res.share
 
     def list_received_existing_shares(
-        self, filter_list: list = None, page_size: int = 0, page_token: str = None
+        self, auth_token: tuple, filter_list: list = None, page_size: int = 0, page_token: str = None
     ) -> list:
         """
         List received existing shares.
         NOTE: Filters for received shares are not yet implemented (14/08/2024)
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param filter: Filter object to filter the shares, see create_share_filter.
         :param page_size: Number of shares to return in a page, defaults to 0, server decides.
         :param page_token: Token to get to a specific page.
@@ -220,7 +231,7 @@ class Share:
         :raises: UnknownException (Unknown error)
         """
         req = cs3scapi.ListReceivedSharesRequest(filters=filter_list, page_size=page_size, page_token=page_token)
-        res = self._gateway.ListExistingReceivedShares(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.ListExistingReceivedShares(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(res.status, "list received existing shares", f'filter="{filter_list}"')
         self._log.debug(
             f'msg="Invoked ListExistingReceivedShares" filter="{filter_list}" res_count="{len(res.share_infos)}"'
@@ -228,11 +239,14 @@ class Share:
         )
         return (res.share_infos, res.next_page_token)
 
-    def get_received_share(self, opaque_id: str = None, share_key: cs3scr.ShareKey = None) -> cs3scr.ReceivedShare:
+    def get_received_share(
+            self, auth_token: tuple, opaque_id: str = None, share_key: cs3scr.ShareKey = None
+    ) -> cs3scr.ReceivedShare:
         """
         Get a received share by its opaque id or share key (combination of resource_id, grantee and owner),
         one of them is required.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param opaque_id: Opaque share id. (SEMI-OPTIONAL).
         :param share_key: Share key, see ShareKey definition in cs3apis (SEMI-OPTIONAL).
         :return: ReceivedShare object.
@@ -248,7 +262,7 @@ class Share:
             req = cs3scapi.GetReceivedShareRequest(ref=cs3scr.ShareReference(key=share_key))
         else:
             raise ValueError("opaque_id or share_key is required")
-        res = self._gateway.GetReceivedShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.GetReceivedShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status, "get received share", f'opaque_id/share_key="{opaque_id if opaque_id else share_key}"'
         )
@@ -259,11 +273,12 @@ class Share:
         return res.share
 
     def update_received_share(
-        self, received_share: cs3scr.ReceivedShare, state: str = "SHARE_STATE_ACCEPTED"
+        self, auth_token: tuple, received_share: cs3scr.ReceivedShare, state: str = "SHARE_STATE_ACCEPTED"
     ) -> cs3scr.ReceivedShare:
         """
         Update the state of a received share (SHARE_STATE_ACCEPTED, SHARE_STATE_ACCEPTED, SHARE_STATE_REJECTED).
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param recieved_share: ReceivedShare object.
         :param state: Share state to update to, defaults to SHARE_STATE_ACCEPTED, (REQUIRED).
         :return: Updated ReceivedShare object.
@@ -283,7 +298,7 @@ class Share:
             ),
             update_mask=field_masks.FieldMask(paths=["state"]),
         )
-        res = self._gateway.UpdateReceivedShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.UpdateReceivedShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status, "update received share", f'opaque_id="{received_share.share.id.opaque_id}"'
         )
@@ -295,6 +310,7 @@ class Share:
 
     def create_public_share(
         self,
+        auth_token: tuple,
         resource_info: cs3spr.ResourceInfo,
         role: str,
         password: str = None,
@@ -307,6 +323,7 @@ class Share:
         """
         Create a public share.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param resource_info: Resource info, see file.stat (REQUIRED).
         :param role: Role to assign to the grantee, VIEWER or EDITOR (REQUIRED)
         :param password: Password to access the share.
@@ -335,17 +352,18 @@ class Share:
             notify_uploads_extra_recipients=notify_uploads_extra_recipients,
         )
 
-        res = self._gateway.CreatePublicShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.CreatePublicShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(res.status, "create public share", f'resource_id="{resource_info.id}"')
         self._log.debug(f'msg="Invoked CreatePublicShare" resource_id="{resource_info.id}" trace="{res.status.trace}"')
         return res.share
 
     def list_existing_public_shares(
-        self, filter_list: list = None, page_size: int = 0, page_token: str = None, sign: bool = None
+        self, auth_token: tuple, filter_list: list = None, page_size: int = 0, page_token: str = None, sign: bool = None
     ) -> list:
         """
         List existing public shares.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param filter: Filter object to filter the shares, see create_public_share_filter.
         :param page_size: Number of shares to return in a page, defaults to 0 and then the server decides.
         :param page_token: Token to get to a specific page.
@@ -358,7 +376,7 @@ class Share:
         req = cs3slapi.ListPublicSharesRequest(
             filters=filter_list, page_size=page_size, page_token=page_token, sign=sign
         )
-        res = self._gateway.ListExistingPublicShares(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.ListExistingPublicShares(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(res.status, "list existing public shares", f'filter="{filter_list}"')
         self._log.debug(
             f'msg="Invoked ListExistingPublicShares" filter="{filter_list}" res_count="{len(res.share_infos)}" '
@@ -366,10 +384,13 @@ class Share:
         )
         return (res.share_infos, res.next_page_token)
 
-    def get_public_share(self, opaque_id: str = None, token: str = None, sign: bool = False) -> cs3slr.PublicShare:
+    def get_public_share(
+            self, auth_token: tuple, opaque_id: str = None, token: str = None, sign: bool = False
+    ) -> cs3slr.PublicShare:
         """
         Get a public share by its opaque id or token, one of them is required.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param opaque_id: Opaque share id (SEMI-OPTIONAL).
         :param share_token: Share token (SEMI-OPTIONAL).
         :param sign: if the signature should be included in the share.
@@ -387,7 +408,7 @@ class Share:
         else:
             raise ValueError("token or opaque_id is required")
         req = cs3slapi.GetPublicShareRequest(ref=ref, sign=sign)
-        res = self._gateway.GetPublicShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.GetPublicShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status, "get public share", f'opaque_id/token="{opaque_id if opaque_id else token}"'
         )
@@ -399,6 +420,7 @@ class Share:
 
     def update_public_share(
         self,
+        auth_token: tuple,
         type: str,
         role: str,
         opaque_id: str = None,
@@ -415,6 +437,7 @@ class Share:
         however, other parameters are optional. Note that only the type of update specified will be applied.
         The role will only change if type is TYPE_PERMISSIONS.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param type: Type of update to perform TYPE_PERMISSIONS, TYPE_PASSWORD, TYPE_EXPIRATION, TYPE_DISPLAYNAME,
                         TYPE_DESCRIPTION, TYPE_NOTIFYUPLOADS, TYPE_NOTIFYUPLOADSEXTRARECIPIENTS (REQUIRED).
         :param role: Role to assign to the grantee, VIEWER or EDITOR (REQUIRED).
@@ -451,7 +474,7 @@ class Share:
             password=password,
         )
         req = cs3slapi.UpdatePublicShareRequest(ref=ref, update=update)
-        res = self._gateway.UpdatePublicShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.UpdatePublicShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status,
             "update public share",
@@ -463,10 +486,11 @@ class Share:
         )
         return res.share
 
-    def remove_public_share(self, token: str = None, opaque_id: str = None) -> None:
+    def remove_public_share(self, auth_token: tuple, token: str = None, opaque_id: str = None) -> None:
         """
         Remove a public share by its token or opaque id, one of them is required.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param token: Share token (SEMI-OPTIONAL).
         :param opaque_id: Opaque share id (SEMI-OPTIONAL).
         :return: None
@@ -481,7 +505,7 @@ class Share:
             raise ValueError("token or opaque_id is required")
 
         req = cs3slapi.RemovePublicShareRequest(ref=ref)
-        res = self._gateway.RemovePublicShare(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.RemovePublicShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
             res.status, "remove public share", f'opaque_id/token="{opaque_id if opaque_id else token}"'
         )

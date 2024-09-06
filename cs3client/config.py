@@ -132,6 +132,15 @@ class Config:
         return self._config.get(self._config_category, "auth_client_id", fallback=None)
 
     @property
+    def auth_client_secret(self) -> str:
+        """
+        The auth_client_secret property returns the auth_client_secret value from the configuration,
+
+        :return: auth_client_secret
+        """
+        return self._config.get(self._config_category, "auth_client_secret", fallback=None)
+
+    @property
     def tus_enabled(self) -> bool:
         """
         The tus_enabled property returns the tus_enabled value from the configuration,

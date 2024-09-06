@@ -1,5 +1,5 @@
 """
-file_api_example.py
+lock_example.py
 
 Example script to demonstrate the usage of the app API in the CS3Client class.
 note that these are examples, and is not meant to be run as a script.
@@ -11,9 +11,10 @@ Last updated: 30/08/2024
 
 import logging
 import configparser
-from cs3client.cs3resource import Resource
 from cs3client.cs3client import CS3Client
 from cs3client.auth import Auth
+from cs3client.cs3resource import Resource
+
 
 config = configparser.ConfigParser()
 with open("default.conf") as fdef:
@@ -36,13 +37,29 @@ auth_token = auth.get_token()
 token = "<your_reva_token>"
 auth_token = Auth.check_token(token)
 
-# list_app_providers
-res = client.app.list_app_providers(auth.get_token())
+resource = Resource(abs_path="/eos/user/r/rwelande/lock_test.txt")
+
+# Set lock
+client.file.set_lock(auth_token, resource, app_name="a", lock_id="some_lock")
+
+# Get lock
+res = client.file.get_lock(auth_token, resource)
+if res is not None:
+    lock_id = res["lock_id"]
+    print(res)
+
+# Unlock
+res = client.file.unlock(auth_token, resource, app_name="a", lock_id=lock_id)
+
+# Refresh lock
+client.file.set_lock(auth_token, resource, app_name="a", lock_id="some_lock")
+res = client.file.refresh_lock(
+    auth_token, resource, app_name="a", lock_id="new_lock", existing_lock_id=lock_id
+)
+
 if res is not None:
     print(res)
 
-# open_in_app
-resource = Resource(abs_path="/eos/user/r/rwelande/collabora.odt")
-res = client.app.open_in_app(auth.get_token(), resource)
+res = client.file.get_lock(auth_token, resource)
 if res is not None:
     print(res)

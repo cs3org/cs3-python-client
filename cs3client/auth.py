@@ -3,20 +3,22 @@ auth.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 19/08/2024
+Last updated: 30/08/2024
 """
 
 import grpc
 import jwt
 import datetime
 import logging
+from typing import Union
 from cs3.gateway.v1beta1.gateway_api_pb2 import AuthenticateRequest
 from cs3.auth.registry.v1beta1.registry_api_pb2 import ListAuthProvidersRequest
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 from cs3.rpc.v1beta1.code_pb2 import CODE_OK
 
-from exceptions.exceptions import AuthenticationException, SecretNotSetException
-from config import Config
+from .cs3client import CS3Client
+from .exceptions.exceptions import AuthenticationException, SecretNotSetException
+from .config import Config
 
 
 class Auth:
@@ -24,7 +26,7 @@ class Auth:
     Auth class to handle authentication and token validation with CS3 Gateway API.
     """
 
-    def __init__(self, config: Config, log: logging.Logger, gateway: GatewayAPIStub) -> None:
+    def __init__(self, cs3_client: CS3Client) -> None:
         """
         Initializes the Auth class with configuration, logger, and gateway stub,
         NOTE that token OR the client secret has to be set when instantiating the auth object.
@@ -33,32 +35,33 @@ class Auth:
         :param log: Logger instance for logging.
         :param gateway: GatewayAPIStub instance for interacting with CS3 Gateway.
         """
-        self._gateway: GatewayAPIStub = gateway
-        self._log: logging.Logger = log
-        self._config: Config = config
-        # The user should be able to change the client secret (e.g. token) at runtime
-        self._client_secret: str | None = None
-        self._token: str | None = None
-
-    def set_token(self, token: str) -> None:
-        """
-        Should be used if the user wishes to set the reva token directly, instead of letting the client
-        exchange credentials for the token. NOTE that token OR the client secret has to be set when
-        instantiating the client object.
-
-        :param token: The reva token.
-        """
-        self._token = token
+        self._gateway: GatewayAPIStub = cs3_client._gateway
+        self._log: logging.Logger = cs3_client._log
+        self._config: Config = cs3_client._config
+        # The user should be able to change the client secret (e.g. token) and client id at runtime
+        self._client_secret: Union[str, None] = self._config.auth_client_secret
+        self._client_id: Union[str, None] = self._config.auth_client_id
+        self._token: Union[str, None] = None
 
     def set_client_secret(self, token: str) -> None:
         """
         Sets the client secret, exists so that the user can change the client secret (e.g. token, password) at runtime,
-        without having to create a new Auth object. NOTE that token OR the client secret has to be set when
-        instantiating the client object.
+        without having to create a new Auth object. Note client secret has to be set when
+        instantiating the client object or through the configuration.
 
         :param token: Auth token/password.
         """
         self._client_secret = token
+
+    def set_client_id(self, id: str) -> None:
+        """
+        Sets the client id, exists so that the user can change the client id at runtime, without having to create
+        a new Auth object. Settings this (either through config or here) is optional unless you are using
+        basic authentication.
+
+        :param token: id.
+        """
+        self._client_id = id
 
     def get_token(self) -> tuple[str, str]:
         """
@@ -71,31 +74,32 @@ class Auth:
         :raises: SecretNotSetException (neither token or client secret was set)
         """
 
-        if not Auth._check_token(self._token):
-            # Check that client secret or token is set
-            if not self._client_secret and not self._token:
-                self._log.error("Attempted to authenticate, neither client secret or token was set.")
-                raise SecretNotSetException("The client secret (e.g. token, passowrd) is not set")
-            elif not self._client_secret and self._token:
-                # Case where ONLY a token is provided but it has expired
-                self._log.error("The provided token have expired")
-                raise AuthenticationException("The credentials have expired")
-            # Create an authentication request
+        if not self._client_secret:
+            self._log.error("Attempted to authenticate, client secret was not set")
+            raise SecretNotSetException("The client secret (e.g. token, passowrd) is not set")
+
+        try:
+            self.check_token(self._token)
+        except AuthenticationException:
+            # Token has expired or has not been set, obtain another one.
             req = AuthenticateRequest(
                 type=self._config.auth_login_type,
-                client_id=self._config.auth_client_id,
+                client_id=self._client_id,
                 client_secret=self._client_secret,
             )
             # Send the authentication request to the CS3 Gateway
             res = self._gateway.Authenticate(req)
 
             if res.status.code != CODE_OK:
-                self._log.error(f"Failed to authenticate user {self._config.auth_client_id}, error: {res.status}")
+                self._log.error(f'msg="Failed to authenticate" '
+                                f'user="{self._client_id if self._client_id else "no_id_set"}" '
+                                f'error_code="{res.status}"')
                 raise AuthenticationException(
-                    f"Failed to authenticate user {self._config.auth_client_id}, error: {res.status}"
+                    f'Failed to authenticate: user="{self._client_id if self._client_id else "no_id_set"}" '
+                    f'error_code="{res.status}"'
                 )
             self._token = res.token
-        self._log.debug(f'msg="Authenticated user" user="{self._config.auth_client_id}"')
+        self._log.debug(f'msg="Authenticated user" user="{self._client_id if self._client_id else "no_id_set"}"')
         return ("x-access-token", self._token)
 
     def list_auth_providers(self) -> list[str]:
@@ -108,7 +112,7 @@ class Auth:
         try:
             res = self._gateway.ListAuthProviders(request=ListAuthProvidersRequest())
             if res.status.code != CODE_OK:
-                self._log.error(f"List auth providers request failed, error: {res.status}")
+                self._log.error(f'msg="List auth providers request failed" error_code="{res.status}"')
                 raise Exception(res.status.message)
         except grpc.RpcError as e:
             self._log.error("List auth providers request failed")
@@ -116,20 +120,22 @@ class Auth:
         return res.types
 
     @classmethod
-    def _check_token(cls, token: str) -> bool:
+    def check_token(cls, token: str) -> tuple:
         """
         Checks if the given token is set and valid.
 
         :param token: JWT token as a string.
-        :return: True if the token is valid, False otherwise.
+        :return tuple: A tuple containing the header key and the token.
+        :raises: ValueError (Token missing)
+        :raises: AuthenticationException (Token is expired)
         """
         if not token:
-            return False
+            raise AuthenticationException("Token not set")
         # Decode the token without verifying the signature
         decoded_token = jwt.decode(jwt=token, algorithms=["HS256"], options={"verify_signature": False})
         now = datetime.datetime.now().timestamp()
         token_expiration = decoded_token.get("exp")
         if token_expiration and now > token_expiration:
-            return False
+            raise AuthenticationException("Token has expired")
 
-        return True
+        return ("x-access-token", token)

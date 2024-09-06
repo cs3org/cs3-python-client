@@ -8,13 +8,10 @@ Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@c
 Last updated: 26/07/2024
 """
 
-import sys
 import unittest
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 
-sys.path.append("src/")
-
-from cs3resource import Resource  # noqa: E402
+from cs3client.cs3resource import Resource
 
 
 class TestResource(unittest.TestCase):

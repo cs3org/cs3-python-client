@@ -3,16 +3,16 @@ user.py
 
 Authors: Rasmus Welander, Diogo Castro, Giuseppe Lo Presti.
 Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@cern.ch
-Last updated: 19/08/2024
+Last updated: 30/08/2024
 """
 
 import logging
-from auth import Auth
-from config import Config
 import cs3.identity.user.v1beta1.resources_pb2 as cs3iur
 import cs3.identity.user.v1beta1.user_api_pb2 as cs3iu
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
-from statuscodehandler import StatusCodeHandler
+
+from .config import Config
+from .statuscodehandler import StatusCodeHandler
 
 
 class User:
@@ -25,7 +25,6 @@ class User:
         config: Config,
         log: logging.Logger,
         gateway: GatewayAPIStub,
-        auth: Auth,
         status_code_handler: StatusCodeHandler,
     ) -> None:
         """
@@ -35,7 +34,6 @@ class User:
         :param gateway: GatewayAPIStub instance for interacting with CS3 Gateway.
         :param auth: An instance of the auth class.
         """
-        self._auth: Auth = auth
         self._log: logging.Logger = log
         self._gateway: GatewayAPIStub = gateway
         self._config: Config = config
@@ -92,10 +90,11 @@ class User:
         self._log.debug(f'msg="Invoked GetUserGroups" opaque_id="{opaque_id}" trace="{res.status.trace}"')
         return res.groups
 
-    def find_users(self, filter) -> list[cs3iur.User]:
+    def find_users(self, auth_token: tuple, filter) -> list[cs3iur.User]:
         """
         Find a user based on a filter.
 
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param filter: Filter to search for.
         :return: a list of user(s).
         :raises: NotFoundException (User not found)
@@ -103,7 +102,7 @@ class User:
         :raises: UnknownException (Unknown error)
         """
         req = cs3iu.FindUsersRequest(filter=filter, skip_fetching_user_groups=True)
-        res = self._gateway.FindUsers(request=req, metadata=[self._auth.get_token()])
+        res = self._gateway.FindUsers(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(res.status, "find users")
         self._log.debug(f'msg="Invoked FindUsers" filter="{filter}" trace="{res.status.trace}"')
         return res.users
