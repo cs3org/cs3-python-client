@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch
 import pytest
 import cs3.rpc.v1beta1.code_pb2 as cs3code
 
-from cs3client.exceptions.exceptions import (
+from cs3client.exceptions import (
     AuthenticationException,
     NotFoundException,
     UnknownException,

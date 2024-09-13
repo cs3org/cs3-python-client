@@ -1,7 +1,7 @@
 exceptions Module
 =================
 
-.. automodule:: exceptions.exceptions
+.. automodule:: exceptions
    :members:
    :undoc-members:
    :show-inheritance:

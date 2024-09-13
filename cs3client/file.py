@@ -20,7 +20,7 @@ import cs3.rpc.v1beta1.code_pb2 as cs3code
 
 
 from .config import Config
-from .exceptions.exceptions import AuthenticationException, FileLockedException
+from .exceptions import AuthenticationException, FileLockedException
 from .cs3resource import Resource
 from .statuscodehandler import StatusCodeHandler
 
