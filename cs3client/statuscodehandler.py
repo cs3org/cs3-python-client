@@ -75,31 +75,23 @@ class StatusCodeHandler:
 
         if status.code == cs3code.CODE_FAILED_PRECONDITION or status.code == cs3code.CODE_ABORTED:
             self._log_precondition_info(status, operation, status_message, msg)
-            raise FileLockedException(f'Failed precondition: operation="{operation}" '
-                                      f'status_code="{status.code}"  message="{status.message}"')
+            raise FileLockedException
         if status.code == cs3code.CODE_ALREADY_EXISTS:
             self._log_already_exists(status, operation, status_message, msg)
-            raise AlreadyExistsException(f'Resource already exists: operation="{operation}" '
-                                         f'status_code="{status.code}" message="{status.message}"')
+            raise AlreadyExistsException
         if status.code == cs3code.CODE_UNIMPLEMENTED:
             self._log.info(f'msg="Invoked {operation} on unimplemented feature" ')
-            raise UnimplementedException(f'Unimplemented feature: operation="{operation}" '
-                                         f'status_code="{status.code}" message="{status.message}"')
+            raise UnimplementedException
         if status.code == cs3code.CODE_NOT_FOUND:
             self._log_not_found_info(status, operation, status_message, msg)
-            raise NotFoundException(f'Not found: operation="{operation}" '
-                                    f'status_code="{status.code}" message="{status.message}"')
+            raise NotFoundException
         if status.code == cs3code.CODE_UNAUTHENTICATED:
             self._log_authentication_error(status, operation, status_message, msg)
-            raise AuthenticationException(f'Operation not permitted: operation="{operation}" '
-                                          f'status_code="{status.code}" message="{status.message}"')
+            raise AuthenticationException
         if status.code != cs3code.CODE_OK:
             if "path not found" in str(status.message).lower():
                 self._log.info(f'msg="Invoked {operation} on missing file" ')
-                raise NotFoundException(
-                    message=f'No such file or directory: operation="{operation}" '
-                            f'status_code="{status.code}" message="{status.message}"'
-                )
+                raise NotFoundException
             self._log_unknown_error(status, operation, status_message, msg)
             raise UnknownException(f'Unknown Error: operation="{operation}" status_code="{status.code}" '
                                    f'message="{status.message}"')
