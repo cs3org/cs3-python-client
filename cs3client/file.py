@@ -86,7 +86,7 @@ class File:
         :raises: UnknownException (Unknown error)
         """
         md = cs3spr.ArbitraryMetadata()
-        md.metadata.update({key: value})  # pylint: disable=no-member
+        md.metadata.update({key: str(value)})  # pylint: disable=no-member
         req = cs3sp.SetArbitraryMetadataRequest(ref=resource.ref, arbitrary_metadata=md, lock_id=lock_id)
         res = self._gateway.SetArbitraryMetadata(request=req, metadata=[auth_token])
         # CS3 storages may refuse to set an xattr in case of lock mismatch: this is an overprotection,
