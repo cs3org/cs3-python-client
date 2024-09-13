@@ -170,8 +170,7 @@ class File:
         self._log.debug(f'msg="Invoked TouchFile" trace="{res.status.trace}"')
 
     def write_file(
-            self, auth_token: tuple, resource: Resource, content: Union[str, bytes], size: int,
-            lock_md: tuple = ('', '')
+            self, auth_token: tuple, resource: Resource, content: Union[str, bytes], size: int, lock_md: tuple = None
     ) -> None:
         """
         Write a file using the given userid as access token. The entire content is written
@@ -183,14 +182,16 @@ class File:
         :param resource: Resource to write content to
         :param content: content to write
         :param size: size of content (optional)
-        :param lock_md: tuple (<app_name>, <lock_id>)
+        :param lock_md: tuple (<app_name>, <lock_id>) (optional)
         :return: None (Success)
         :raises: FileLockedException (File is locked),
         :raises: AuthenticationException (Authentication failed)
         :raises: UnknownException (Unknown error)
 
         """
-        app_name, lock_id = lock_md
+        app_name = lock_id = ''
+        if lock_md:
+            app_name, lock_id = lock_md
         tstart = time.time()
         # prepare endpoint
         if size == -1:
@@ -228,7 +229,7 @@ class File:
                     "X-Reva-Transfer": protocol.token,
                     **dict([auth_token]),
                     "X-Lock-Id": lock_id,
-                    "X-Lock_Holder": app_name,
+                    "X-Lock-Holder": app_name,
                 }
             putres = requests.put(
                 url=protocol.upload_endpoint,
