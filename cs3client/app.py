@@ -7,6 +7,8 @@ Last updated: 30/08/2024
 """
 
 import logging
+from typing import Optional
+
 import cs3.app.registry.v1beta1.registry_api_pb2 as cs3arreg
 import cs3.app.registry.v1beta1.resources_pb2 as cs3arres
 import cs3.gateway.v1beta1.gateway_api_pb2 as cs3gw
@@ -44,7 +46,7 @@ class App:
         self._config: Config = config
 
     def open_in_app(
-            self, auth_token: tuple, resource: Resource, view_mode: str = None, app: str = None
+            self, auth_token: tuple, resource: Resource, view_mode: Optional[str] = None, app: Optional[str] = None
     ) -> cs3apr.OpenInAppURL:
         """
         Open a file in an app, given the resource, view mode (VIEW_MODE_VIEW_ONLY, VIEW_MODE_READ_ONLY,

@@ -7,6 +7,8 @@ Last updated: 30/08/2024
 """
 
 import logging
+from typing import Optional
+
 import cs3.rpc.v1beta1.code_pb2 as cs3code
 import cs3.rpc.v1beta1.status_pb2 as cs3status
 
@@ -20,7 +22,7 @@ class StatusCodeHandler:
         self._log = log
         self._config = config
 
-    def _log_not_found_info(self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None) -> None:
+    def _log_not_found_info(self, status: cs3status.Status, operation: str, status_msg: str, msg: Optional[str] = None) -> None:
         self._log.info(
             f'msg="Not found on {operation}" {msg + " " if msg else ""} '
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
@@ -28,7 +30,7 @@ class StatusCodeHandler:
         )
 
     def _log_authentication_error(
-            self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None
+            self, status: cs3status.Status, operation: str, status_msg: str, msg: Optional[str] = None
     ) -> None:
         self._log.error(
             f'msg="Authentication failed on {operation}" {msg + " " if msg else ""}'
@@ -36,7 +38,7 @@ class StatusCodeHandler:
             f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def _log_unknown_error(self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None) -> None:
+    def _log_unknown_error(self, status: cs3status.Status, operation: str, status_msg: str, msg: Optional[str] = None) -> None:
         self._log.error(
             f'msg="Failed to {operation}, unknown error" {msg + " " if msg else ""}'
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
@@ -44,7 +46,7 @@ class StatusCodeHandler:
         )
 
     def _log_precondition_info(
-            self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None
+            self, status: cs3status.Status, operation: str, status_msg: str, msg: Optional[str] = None
     ) -> None:
         self._log.info(
             f'msg="Failed precondition on {operation}" {msg + " " if msg else ""}'
@@ -52,21 +54,21 @@ class StatusCodeHandler:
             f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def _log_already_exists(self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None) -> None:
+    def _log_already_exists(self, status: cs3status.Status, operation: str, status_msg: str, msg: Optional[str] = None) -> None:
         self._log.info(
             f'msg="Already exists on {operation}" {msg + " " if msg else ""}'
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
             f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def _log_unimplemented(self, status: cs3status.Status, operation: str, status_msg: str, msg: str = None) -> None:
+    def _log_unimplemented(self, status: cs3status.Status, operation: str, status_msg: str, msg: Optional[str] = None) -> None:
         self._log.info(
             f'msg="Invoked {operation} on unimplemented feature" {msg + " " if msg else ""}'
             f'userid="{self._config.auth_client_id if self._config.auth_client_id else "no_id_set"}" '
             f'trace="{status.trace}" reason="{status_msg}"'
         )
 
-    def handle_errors(self, status: cs3status.Status, operation: str, msg: str = None) -> None:
+    def handle_errors(self, status: cs3status.Status, operation: str, msg: Optional[str] = None) -> None:
 
         if status.code == cs3code.CODE_OK:
             return

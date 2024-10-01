@@ -7,6 +7,8 @@ Last updated: 30/08/2024
 """
 
 import logging
+from typing import Optional
+
 import cs3.sharing.collaboration.v1beta1.collaboration_api_pb2 as cs3scapi
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
 import cs3.sharing.collaboration.v1beta1.resources_pb2 as cs3scr
@@ -87,7 +89,7 @@ class Share:
         return res.share
 
     def list_existing_shares(
-        self, auth_token: tuple, filter_list: list[cs3scr.Filter] = None, page_size: int = 0, page_token: str = None
+        self, auth_token: tuple, filter_list: list[cs3scr.Filter] = None, page_size: int = 0, page_token: Optional[str] = None
     ) -> list[cs3scr.Share]:
         """
         List shares based on a filter.
@@ -109,7 +111,7 @@ class Share:
         )
         return (res.share_infos, res.next_page_token)
 
-    def get_share(self, auth_token: tuple, opaque_id: str = None, share_key: cs3scr.ShareKey = None) -> cs3scr.Share:
+    def get_share(self, auth_token: tuple, opaque_id: Optional[str] = None, share_key: Optional[cs3scr.ShareKey] = None) -> cs3scr.Share:
         """
         Get a share by its opaque id or share key (combination of resource_id, grantee and owner),
         one of them is required.
@@ -141,7 +143,7 @@ class Share:
         )
         return res.share
 
-    def remove_share(self, auth_token: tuple, opaque_id: str = None, share_key: cs3scr.ShareKey = None) -> None:
+    def remove_share(self, auth_token: tuple, opaque_id: Optional[str] = None, share_key: Optional[cs3scr.ShareKey] = None) -> None:
         """
         Remove a share by its opaque id or share key (combination of resource_id, grantee and owner),
         one of them is required.
@@ -175,9 +177,9 @@ class Share:
     def update_share(
         self, auth_token: tuple,
         role: str,
-        opaque_id: str = None,
-        share_key: cs3scr.ShareKey = None,
-        display_name: str = None
+        opaque_id: Optional[str] = None,
+        share_key: Optional[cs3scr.ShareKey] = None,
+        display_name: Optional[str] = None
     ) -> cs3scr.Share:
         """
         Update a share by its opaque id.
@@ -216,7 +218,7 @@ class Share:
         return res.share
 
     def list_received_existing_shares(
-        self, auth_token: tuple, filter_list: list = None, page_size: int = 0, page_token: str = None
+        self, auth_token: tuple, filter_list: Optional[list] = None, page_size: int = 0, page_token: Optional[str] = None
     ) -> list:
         """
         List received existing shares.
@@ -240,7 +242,7 @@ class Share:
         return (res.share_infos, res.next_page_token)
 
     def get_received_share(
-            self, auth_token: tuple, opaque_id: str = None, share_key: cs3scr.ShareKey = None
+            self, auth_token: tuple, opaque_id: Optional[str] = None, share_key: Optional[cs3scr.ShareKey] = None
     ) -> cs3scr.ReceivedShare:
         """
         Get a received share by its opaque id or share key (combination of resource_id, grantee and owner),
@@ -313,12 +315,12 @@ class Share:
         auth_token: tuple,
         resource_info: cs3spr.ResourceInfo,
         role: str,
-        password: str = None,
-        expiration: cs3types.Timestamp = None,
-        description: str = None,
+        password: Optional[str] = None,
+        expiration: Optional[cs3types.Timestamp] = None,
+        description: Optional[str] = None,
         internal: bool = False,
         notify_uploads: bool = False,
-        notify_uploads_extra_recipients: list = None,
+        notify_uploads_extra_recipients: Optional[list] = None,
     ) -> cs3slr.PublicShare:
         """
         Create a public share.
@@ -358,7 +360,7 @@ class Share:
         return res.share
 
     def list_existing_public_shares(
-        self, auth_token: tuple, filter_list: list = None, page_size: int = 0, page_token: str = None, sign: bool = None
+        self, auth_token: tuple, filter_list: Optional[list] = None, page_size: int = 0, page_token: Optional[str] = None, sign: bool = False
     ) -> list:
         """
         List existing public shares.
@@ -385,7 +387,7 @@ class Share:
         return (res.share_infos, res.next_page_token)
 
     def get_public_share(
-            self, auth_token: tuple, opaque_id: str = None, token: str = None, sign: bool = False
+            self, auth_token: tuple, opaque_id: Optional[str] = None, token: Optional[str] = None, sign: bool = False
     ) -> cs3slr.PublicShare:
         """
         Get a public share by its opaque id or token, one of them is required.
@@ -423,14 +425,14 @@ class Share:
         auth_token: tuple,
         type: str,
         role: str,
-        opaque_id: str = None,
-        token: str = None,
-        password: str = None,
-        expiration: cs3types.Timestamp = None,
-        notify_uploads_extra_recipients: str = None,
-        description: str = None,
-        display_name: str = None,
-        notify_uploads: bool = None,
+        opaque_id: Optional[str] = None,
+        token: Optional[str] = None,
+        password: Optional[str] = None,
+        expiration: Optional[cs3types.Timestamp] = None,
+        notify_uploads_extra_recipients: Optional[str] = None,
+        description: Optional[str] = None,
+        display_name: Optional[str] = None,
+        notify_uploads: bool = False,
     ) -> None:
         """
         Update a public share by its opaque id or token. (one of them is required), role and type are required,
@@ -486,7 +488,7 @@ class Share:
         )
         return res.share
 
-    def remove_public_share(self, auth_token: tuple, token: str = None, opaque_id: str = None) -> None:
+    def remove_public_share(self, auth_token: tuple, token: Optional[str] = None, opaque_id: Optional[str] = None) -> None:
         """
         Remove a public share by its token or opaque id, one of them is required.
 
@@ -520,12 +522,12 @@ class Share:
         cls,
         type: str,
         role: str,
-        password: str = None,
-        expiration: cs3types.Timestamp = None,
-        display_name: str = None,
-        description: str = None,
-        notify_uploads: bool = None,
-        notify_uploads_extra_recipients: str = None,
+        password: Optional[str] = None,
+        expiration: Optional[cs3types.Timestamp] = None,
+        display_name: Optional[str] = None,
+        description: Optional[str] = None,
+        notify_uploads: bool = False,
+        notify_uploads_extra_recipients: Optional[str] = None,
     ) -> cs3slr.PublicShare:
         """
         Create a public share update object, based on the type the property will be updated,
@@ -567,7 +569,7 @@ class Share:
 
     @classmethod
     def _create_share_grant(
-        cls, opaque_id: str, idp: str, role: str, grantee_type: str, expiration: cs3types.Timestamp = None
+        cls, opaque_id: str, idp: str, role: str, grantee_type: str, expiration: Optional[cs3types.Timestamp] = None
     ) -> cs3scr.ShareGrant:
         """
         Create a share grant object.
@@ -643,10 +645,10 @@ class Share:
         cls,
         filter_type: str,
         resource_id: cs3spr.ResourceId = None,
-        owner_idp: str = None,
-        owner_opaque_id: str = None,
-        creator_idp: str = None,
-        creator_opaque_id: str = None,
+        owner_idp: Optional[str] = None,
+        owner_opaque_id: Optional[str] = None,
+        creator_idp: Optional[str] = None,
+        creator_opaque_id: Optional[str] = None,
     ) -> cs3slapi.ListPublicSharesRequest.Filter:
         """
         Create a public share filter object, based on the filter type (can be TYPE_RESOURCE_ID, TYPE_OWNER,
@@ -688,13 +690,13 @@ class Share:
         cls,
         filter_type: str,
         resource_id: cs3spr.ResourceId = None,
-        owner_idp: str = None,
-        owner_opaque_id: str = None,
-        creator_idp: str = None,
-        creator_opaque_id: str = None,
-        grantee_type: str = None,
-        space_id: str = None,
-        share_state: str = None,
+        owner_idp: Optional[str] = None,
+        owner_opaque_id: Optional[str] = None,
+        creator_idp: Optional[str] = None,
+        creator_opaque_id: Optional[str] = None,
+        grantee_type: Optional[str] = None,
+        space_id: Optional[str] = None,
+        share_state: Optional[str] = None,
     ) -> cs3scr.Filter:
         """
         Create a share filter object, based on the filter type (can be TYPE_RESOURCE_ID, TYPE_OWNER, TYPE_CREATOR,

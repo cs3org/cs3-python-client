@@ -10,8 +10,7 @@ import time
 import logging
 import http
 import requests
-from typing import Union
-from typing import Generator
+from typing import Union, Optional, Generator
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 import cs3.storage.provider.v1beta1.provider_api_pb2 as cs3sp
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
@@ -71,7 +70,7 @@ class File:
         )
         return res.info
 
-    def set_xattr(self, auth_token: tuple, resource: Resource, key: str, value: str, lock_id: str = None) -> None:
+    def set_xattr(self, auth_token: tuple, resource: Resource, key: str, value: str, lock_id: Optional[str] = None) -> None:
         """
         Set the extended attribute <key> to <value> for a resource.
 
@@ -94,7 +93,7 @@ class File:
         self._status_code_handler.handle_errors(res.status, "set extended attribute", resource.get_file_ref_str())
         self._log.debug(f'msg="Invoked setxattr" trace="{res.status.trace}"')
 
-    def remove_xattr(self, auth_token: tuple, resource: Resource, key: str, lock_id: str = None) -> None:
+    def remove_xattr(self, auth_token: tuple, resource: Resource, key: str, lock_id: Optional[str] = None) -> None:
         """
         Remove the extended attribute <key>.
 
@@ -113,7 +112,7 @@ class File:
         self._log.debug(f'msg="Invoked UnsetArbitraryMetaData" trace="{res.status.trace}"')
 
     def rename_file(
-            self, auth_token: tuple, resource: Resource, newresource: Resource, lock_id: str = None
+            self, auth_token: tuple, resource: Resource, newresource: Resource, lock_id: Optional[str] = None
     ) -> None:
         """
         Rename/move resource to new resource.
@@ -133,7 +132,7 @@ class File:
         self._status_code_handler.handle_errors(res.status, "rename file", resource.get_file_ref_str())
         self._log.debug(f'msg="Invoked Move" trace="{res.status.trace}"')
 
-    def remove_file(self, auth_token: tuple, resource: Resource, lock_id: str = None) -> None:
+    def remove_file(self, auth_token: tuple, resource: Resource, lock_id: Optional[str] = None) -> None:
         """
         Remove a resource.
 
@@ -171,7 +170,7 @@ class File:
 
     def write_file(
             self, auth_token: tuple, resource: Resource, content: Union[str, bytes], size: int,
-            app_name: str = None, lock_id: str = None
+            app_name: Optional[str] = None, lock_id: Optional[str] = None
     ) -> None:
         """
         Write a file using the given userid as access token. The entire content is written
@@ -270,7 +269,7 @@ class File:
             f'elapsedTimems="{(tend - tstart) * 1000:.1f}"'
         )
 
-    def read_file(self, auth_token: tuple, resource: Resource, lock_id: str = None) -> Generator[bytes, None, None]:
+    def read_file(self, auth_token: tuple, resource: Resource, lock_id: Optional[str] = None) -> Generator[bytes, None, None]:
         """
         Read a file. Note that the function is a generator, managed by the app server.
 
