@@ -171,7 +171,7 @@ class File:
 
     def write_file(
             self, auth_token: tuple, resource: Resource, content: Union[str, bytes], size: int,
-            lock_md: tuple = ('', '')
+            lock_md: tuple = ('', ''), disable_versioning: bool = False
     ) -> None:
         """
         Write a file using the given userid as access token. The entire content is written
@@ -184,6 +184,7 @@ class File:
         :param content: content to write
         :param size: size of content (optional)
         :param lock_md: tuple (<app_name>, <lock_id>)
+        :param disable_versioning: bool to disable versioning on EOS
         :return: None (Success)
         :raises: FileLockedException (File is locked),
         :raises: AuthenticationException (Authentication failed)
@@ -230,6 +231,8 @@ class File:
                     "X-Lock-Id": lock_id,
                     "X-Lock_Holder": app_name,
                 }
+            if disable_versioning:
+                headers.update({"X-Disable-Versioning": "true"})
             putres = requests.put(
                 url=protocol.upload_endpoint,
                 data=content,
