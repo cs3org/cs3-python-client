@@ -19,6 +19,15 @@ class AuthenticationException(Exception):
         super().__init__(message)
 
 
+class PermissionDeniedException(IOError):
+    """
+    Standard permission denied message
+    """
+
+    def __init__(self, message: str = "Permission denied"):
+        super().__init__(message)
+
+
 class NotFoundException(IOError):
     """
     Standard file missing message
@@ -47,15 +56,6 @@ class FileLockedException(IOError):
         super().__init__(message)
 
 
-class UnknownException(Exception):
-    """
-    Standard exception to be thrown when we get an error that is unknown, e.g. not defined in the cs3api
-    """
-
-    def __init__(self, message: str = ""):
-        super().__init__(message)
-
-
 class AlreadyExistsException(IOError):
     """
     Standard error thrown when attempting to create a resource that already exists
@@ -72,3 +72,13 @@ class UnimplementedException(Exception):
 
     def __init__(self, message: str = "Not implemented"):
         super().__init__(message)
+
+
+class UnknownException(Exception):
+    """
+    Standard exception to be thrown when we get an error that is unknown, e.g. not defined in the cs3api
+    """
+
+    def __init__(self, message: str = ""):
+        super().__init__(message)
+
