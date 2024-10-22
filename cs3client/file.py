@@ -171,7 +171,7 @@ class File:
     def write_file(
             self, auth_token: tuple, resource: Resource, content: Union[str, bytes], size: int,
             app_name: Optional[str] = None, lock_id: Optional[str] = None,
-            disable_versioning: bool = False
+            disable_versioning: Optional[bool] = False
     ) -> None:
         """
         Write a file using the given userid as access token. The entire content is written
