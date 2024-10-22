@@ -15,7 +15,7 @@ import cs3.sharing.link.v1beta1.link_api_pb2 as cs3slapi
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 import cs3.rpc.v1beta1.code_pb2 as cs3code
 
-from cs3client.exceptions.exceptions import (
+from cs3client.exceptions import (
     AuthenticationException,
     NotFoundException,
     UnknownException,

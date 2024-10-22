@@ -6,8 +6,9 @@ Emails: rasmus.oscar.welander@cern.ch, diogo.castro@cern.ch, giuseppe.lopresti@c
 Last updated: 30/08/2024
 """
 
-from typing import Generator
+from typing import Generator, Optional
 import logging
+
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
 import cs3.storage.provider.v1beta1.provider_api_pb2 as cs3spp
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
@@ -65,7 +66,7 @@ class Checkpoint:
         return res.versions
 
     def restore_file_version(
-            self, auth_token: tuple, resource: Resource, version_key: str, lock_id: str = None
+            self, auth_token: tuple, resource: Resource, version_key: str, lock_id: Optional[str] = None
     ) -> None:
         """
         Restore a file to a previous version.
