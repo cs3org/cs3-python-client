@@ -1,6 +1,6 @@
 # CS3Client
 
-`CS3Client` is a Python client for interacting with the CS3 (Cloud Storage Services for Science) API. It allows users to seamlessly communicate with cloud storage services that support CS3 protocols, enabling file management, data transfer, and other cloud-based operations.
+`CS3Client` is a Python client for interacting with the CS3 (Cloud Sync&Share Storage) [APIs](https://github.com/cs3org/cs3apis). It allows users to seamlessly communicate with cloud storage services that support CS3 protocols, enabling file management, data transfer, and other cloud-based operations.
 
 ## Table of Contents
 
