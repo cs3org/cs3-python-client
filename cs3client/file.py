@@ -19,7 +19,7 @@ import cs3.rpc.v1beta1.code_pb2 as cs3code
 
 
 from .config import Config
-from .exceptions import AuthenticationException, FileLockedException
+from .exceptions import AuthenticationException, FileLockedException, NotFoundException
 from .cs3resource import Resource
 from .statuscodehandler import StatusCodeHandler
 
@@ -226,6 +226,7 @@ class File:
             else:
                 headers = {
                     "Upload-Length": str(size),
+                    "Content-Length": str(size),
                     "X-Reva-Transfer": protocol.token,
                     **dict([auth_token]),
                     "X-Lock-Id": lock_id,
@@ -318,7 +319,10 @@ class File:
                 f'msg="Error downloading file from Reva" code="{fileget.status_code}" '
                 f'reason="{status_msg}"'
             )
-            raise IOError(fileget.reason)
+            if fileget.status_code == http.client.NOTFOUND:
+                raise NotFoundException
+            else:
+                raise IOError(fileget.reason)
         else:
             self._log.info(
                 f'msg="File open for read" {resource.get_file_ref_str()} elapsedTimems="{(tend - tstart) * 1000:.1f}"'
