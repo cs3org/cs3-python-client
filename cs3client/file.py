@@ -319,7 +319,7 @@ class File:
                 f'msg="Error downloading file from Reva" code="{fileget.status_code}" '
                 f'reason="{status_msg}"'
             )
-            if fileget.status_code == http.client.NOTFOUND:
+            if fileget.status_code == http.client.NOT_FOUND:
                 raise NotFoundException
             else:
                 raise IOError(fileget.reason)
