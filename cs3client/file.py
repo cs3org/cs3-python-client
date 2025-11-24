@@ -226,7 +226,6 @@ class File:
             else:
                 headers = {
                     "Upload-Length": str(size),
-                    "Content-Length": str(size),
                     "X-Reva-Transfer": protocol.token,
                     **dict([auth_token]),
                     "X-Lock-Id": lock_id,
