@@ -11,6 +11,8 @@ Last updated: 28/08/2024
 import pytest
 from unittest.mock import Mock, patch
 import cs3.rpc.v1beta1.code_pb2 as cs3code
+import cs3.identity.user.v1beta1.user_api_pb2 as cs3iu
+import cs3.identity.user.v1beta1.resources_pb2 as cs3iur
 
 from cs3client.exceptions import (
     AuthenticationException,
@@ -124,7 +126,11 @@ def test_get_user_groups(
 def test_find_users(
     user_instance, status_code, status_message, expected_exception, users  # noqa: F811 (not a redefinition)
 ):
-    filter = "filter"
+    filters = [
+        cs3iu.Filter(
+            type=cs3iur.UserType.USER_TYPE_PRIMARY
+        )
+    ]
 
     mock_response = Mock()
     mock_response.status.code = status_code
@@ -135,7 +141,7 @@ def test_find_users(
     with patch.object(user_instance._gateway, "FindUsers", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                user_instance.find_users(auth_token, filter)
+                user_instance.find_users(auth_token, filters)
         else:
-            result = user_instance.find_users(auth_token, filter)
+            result = user_instance.find_users(auth_token, filters)
             assert result == users

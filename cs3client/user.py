@@ -90,18 +90,18 @@ class User:
         self._log.debug(f'msg="Invoked GetUserGroups" opaque_id="{opaque_id}" trace="{res.status.trace}"')
         return res.groups
 
-    def find_users(self, auth_token: tuple, filter) -> list[cs3iur.User]:
+    def find_users(self, auth_token: tuple, filters) -> list[cs3iur.User]:
         """
         Find a user based on a filter.
 
         :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
-        :param filter: Filter to search for.
+        :param filters: Filters to search for.
         :return: a list of user(s).
         :raises: NotFoundException (User not found)
         :raises: AuthenticationException (Operation not permitted)
         :raises: UnknownException (Unknown error)
         """
-        req = cs3iu.FindUsersRequest(filter=filter, skip_fetching_user_groups=True)
+        req = cs3iu.FindUsersRequest(filters=filters, skip_fetching_user_groups=True)
         res = self._gateway.FindUsers(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(res.status, "find users")
         self._log.debug(f'msg="Invoked FindUsers" filter="{filter}" trace="{res.status.trace}"')
