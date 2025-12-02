@@ -65,7 +65,7 @@ class File:
         tend = time.time()
         self._status_code_handler.handle_errors(res.status, "stat", resource.get_file_ref_str())
         self._log.info(
-            f'msg="Invoked Stat" fileref="{resource.ref}" {resource.get_file_ref_str()}  trace="{res.status.trace}" '
+            f'msg="Invoked Stat" fileref="{resource.ref}" {resource.get_file_ref_str()} trace="{res.status.trace}" '
             f'elapsedTimems="{(tend - tstart) * 1000:.1f}"'
         )
         return res.info
@@ -240,6 +240,8 @@ class File:
                 verify=self._config.ssl_verify,
                 timeout=self._config.http_timeout,
             )
+
+
         except requests.exceptions.RequestException as e:
             self._log.error(f'msg="Exception when uploading file to Reva" reason="{e}"')
             raise IOError(e) from e
@@ -265,12 +267,13 @@ class File:
                 return
 
             self._log.error(
-                f'msg="Error uploading file" code="{putres.status_code}" reason="{putres.reason}"'
+                f'msg="Error uploading file" code="{putres.status_code}" reason="{putres.reason}" headers="{headers}"'
             )
             raise IOError(putres.reason)
         self._log.info(
             f'msg="File written successfully" {resource.get_file_ref_str()} '
-            f'elapsedTimems="{(tend - tstart) * 1000:.1f}"'
+            f'elapsedTimems="{(tend - tstart) * 1000:.1f}" '
+            f'headers="{headers}"'
         )
 
     def read_file(self, auth_token: tuple, resource: Resource, lock_id: Optional[str] = None) -> Generator[bytes, None, None]:
@@ -377,7 +380,7 @@ class File:
         :raises: AuthenticationException (Authentication Failed)
         :raises: UnknownException (Unknown Error)
         """
-        self._log.debug(f'msg="Using xattrs to execute SetLock" {resource.get_file_ref_str()}" value="{lock_id}"')
+        self._log.debug(f'msg="Using xattrs to execute SetLock" {resource.get_file_ref_str()} value="{lock_id}"')
         try:
             # The stat can raise a KeyError if the metadata (lock) attribute has not been set yet
             # e.g. the file is not locked
@@ -421,8 +424,8 @@ class File:
             return
 
         self._status_code_handler.handle_errors(res.status, "set lock", resource.get_file_ref_str())
-        self._log.debug(f'msg="Invoked SetLock" {resource.get_file_ref_str()}" '
-                        f'value="{lock_id} result="{res.status.trace}"')
+        self._log.debug(f'msg="Invoked SetLock" {resource.get_file_ref_str()} '
+                        f'value="{lock_id}" result="{res.status.trace}"')
 
     def _get_lock_using_xattr(self, auth_token: tuple, resource: Resource) -> dict:
         """
@@ -436,7 +439,7 @@ class File:
         :raises: AuthenticationException (Authentication Failed)
         :raises: UnknownException (Unknown Error)
         """
-        self._log.debug(f'msg="Using xattrs to execute getlock" {resource.get_file_ref_str()}"')
+        self._log.debug(f'msg="Using xattrs to execute getlock" {resource.get_file_ref_str()}')
         try:
             currvalue = self.stat(auth_token, resource).arbitrary_metadata.metadata[LOCK_ATTR_KEY]
             values = currvalue.split("!")
@@ -475,7 +478,7 @@ class File:
             return self._get_lock_using_xattr(auth_token, resource)
 
         self._status_code_handler.handle_errors(res.status, "get lock", resource.get_file_ref_str())
-        self._log.debug(f'msg="Invoked GetLock" {resource.get_file_ref_str()}" result="{res.status.trace}"')
+        self._log.debug(f'msg="Invoked GetLock" {resource.get_file_ref_str()} result="{res.status.trace}"')
 
         # rebuild a dict corresponding to the internal JSON structure used by Reva
         return {
@@ -508,7 +511,7 @@ class File:
         :raises: AuthenticationException (Authentication Failed)
         :raises: UnknownException (Unknown Error)
         """
-        self._log.debug(f'msg="Using xattrs to execute RefreshLock" {resource.get_file_ref_str()}" value="{lock_id}"')
+        self._log.debug(f'msg="Using xattrs to execute RefreshLock" {resource.get_file_ref_str()} value="{lock_id}"')
         try:
             # The stat can raise a KeyError if the metadata (lock) attribute has not been set yet
             # e.g. the file is not locked
@@ -517,7 +520,7 @@ class File:
             if values[0] == app_name and (not existing_lock_id or values[1] == existing_lock_id):
                 raise KeyError
             self._log.info(
-                f'Failed precondition on RefreshLock" {resource.get_file_ref_str()}" appname="{app_name}" '
+                f'Failed precondition on RefreshLock" {resource.get_file_ref_str()} appname="{app_name}" '
                 f'value="{lock_id} previouslock="{currvalue}"'
             )
             raise FileLockedException()
@@ -583,7 +586,7 @@ class File:
         :raises: AuthenticationException (Authentication Failed)
         :raises: UnknownException (Unknown Error)
         """
-        self._log.debug(f'msg="Using xattrs to execute unlock" {resource.get_file_ref_str()}" value="{lock_id}"')
+        self._log.debug(f'msg="Using xattrs to execute unlock" {resource.get_file_ref_str()} value="{lock_id}"')
         try:
             # The stat can raise a KeyError if the metadata (lock) attribute has not been set yet
             # e.g. the file is not locked
@@ -592,7 +595,7 @@ class File:
             if values[0] == app_name and values[1] == lock_id:
                 raise KeyError
             self._log.info(
-                f'Failed precondition on unlock" {resource.get_file_ref_str()}" appname="{app_name}" '
+                f'Failed precondition on unlock" {resource.get_file_ref_str()} appname="{app_name}" '
                 f'value={lock_id} previouslock="{currvalue}"'
             )
             raise FileLockedException()
