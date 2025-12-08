@@ -13,6 +13,7 @@ from configparser import ConfigParser
 
 from .file import File
 from .user import User
+from .group import Group
 from .share import Share
 from .statuscodehandler import StatusCodeHandler
 from .app import App
@@ -48,6 +49,7 @@ class CS3Client:
         self.file: File = File(self._config, self._log, self._gateway, self._status_code_handler)
         self.user: User = User(self._config, self._log, self._gateway, self._status_code_handler)
         self.app: App = App(self._config, self._log, self._gateway, self._status_code_handler)
+        self.group: Group = Group(self._config, self._log, self._gateway, self._status_code_handler)
         self.checkpoint: Checkpoint = Checkpoint(
             self._config, self._log, self._gateway, self._status_code_handler
         )

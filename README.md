@@ -20,6 +20,7 @@
 - Support for common lock operations (set lock, get lock, unlock, ...).
 - Support for common share operations (create share, update share, delete share, ...).
 - Support for common user operations (get user, find users, get user groups, ...).
+- support for common group operations (get group, find group, has member, ...).
 - Support for restoring files through checkpoints (restore file version, list checkpoints).
 - Support for applications (open in app, list app providers).
 - Authentication and authorization handling.
@@ -300,6 +301,24 @@ res = client.user.get_user_by_claim("mail", "rasmus.oscar.welander@cern.ch")
 # get_user_by_claim (username)
 res = client.user.get_user_by_claim("username", "rwelande")
 
+```
+
+### Group example
+```python
+# get_group_by_claim (username)
+res = client.group.get_group_by_claim(client.auth.get_token(), "username", "rwelande")
+
+# get_group
+res = client.group.get_group(client.auth.get_token(), "https://auth.cern.ch/auth/realms/cern", "asdoiqwe")
+
+# has_member
+res = client.group.has_member(client.auth.get_token(), "somegroup", "rwelande", "https://auth.cern.ch/auth/realms/cern")
+
+# get_members
+res = client.group.get_members(client.auth.get_token(), "somegroup", "https://auth.cern.ch/auth/realms/cern")
+
+# find_groups
+res = client.group.find_groups(client.auth.get_token(), "rwel")
 ```
 
 ### App Example
