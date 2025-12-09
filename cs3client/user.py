@@ -7,6 +7,8 @@ Last updated: 30/08/2024
 """
 
 import logging
+from typing import Optional
+
 import cs3.identity.user.v1beta1.resources_pb2 as cs3iur
 import cs3.identity.user.v1beta1.user_api_pb2 as cs3iu
 from cs3.gateway.v1beta1.gateway_api_pb2_grpc import GatewayAPIStub
@@ -106,3 +108,27 @@ class User:
         self._status_code_handler.handle_errors(res.status, "find users")
         self._log.debug(f'msg="Invoked FindUsers" filter="{filter}" trace="{res.status.trace}"')
         return res.users
+
+    @classmethod
+    def create_find_user_filter(cls, filter_type: str, query: Optional[str] = None, user_type: Optional[str] = None) -> cs3iu.Filter:
+        """
+        Create a filter for finding users.
+
+        :param filter_type: The type of filter to create. Supported types: TYPE_QUERY, TYPE_USER_TYPE.
+        :param query: The query string for TYPE_QUERY filter.
+        :param user_type: The user type for TYPE_USER_TYPE filter. Supported types: USER_TYPE_PRIMARY,
+            USER_TYPE_SECONDARY, USER_TYPE_SERVICE, USER_TYPE_GUEST, USER_TYPE_FEDERATED, USER_TYPE_LIGHTWEIGHT,
+            USER_TYPE_SPACE_OWNER.
+        :return: A filter object.
+        :raises: ValueError (Unsupported filter type)
+        """
+        filter_type = cs3iu.Filter.Type.Value(filter_type.upper())
+        if filter_type == cs3iu.Filter.Type.TYPE_QUERY:
+            return cs3iu.Filter(type=filter_type, query=query)
+        elif filter_type == cs3iu.Filter.Type.TYPE_USERTYPE:
+            if user_type is None:
+                raise ValueError("user_type must be provided for TYPE_USERTYPE filter")
+            user_type = cs3iur.UserType.Value(user_type.upper())
+            return cs3iu.Filter(type=filter_type, usertype=user_type)
+        else:
+            raise ValueError(f"Unsupported filter type: {filter_type}")
