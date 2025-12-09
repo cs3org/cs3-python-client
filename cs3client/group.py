@@ -7,6 +7,8 @@ Last updated: 08/12/2025
 """
 
 import logging
+from typing import Optional
+
 import cs3.identity.group.v1beta1.resources_pb2 as cs3igr
 import cs3.identity.group.v1beta1.group_api_pb2 as cs3ig
 import cs3.identity.user.v1beta1.resources_pb2 as cs3iur
@@ -122,3 +124,26 @@ class Group:
         self._status_code_handler.handle_errors(res.status, "find groups")
         self._log.debug(f'msg="Invoked FindGroups" filter="{filter}" trace="{res.status.trace}"')
         return res.groups
+
+    @classmethod
+    def create_find_group_filter(cls, filter_type: str, query: Optional[str], group_type: Optional[str]) -> cs3ig.Filter:
+        """
+        Create a filter for finding groups.
+
+        :param filter_type: The type of filter to create. Supported types: TYPE_GROUPTYPE, TYPE_QUERY.
+        :param query: The query string for TYPE_QUERY filter, or GROUP_TYPE_FEDERATED/GROUP_TYPE_REGULAR for TYPE_GROUPTYPE.
+        :return: A filter object.
+        :raises: ValueError (Unsupported filter type)
+        """
+        filter_type_value = cs3ig.Filter.Type.Value(filter_type.upper())
+        if filter_type_value == cs3ig.Filter.Type.TYPE_QUERY:
+            if query is None:
+                raise ValueError("query must be provided for TYPE_QUERY filter")
+            return cs3ig.Filter(type=filter_type_value, query=query)
+        elif filter_type_value == cs3ig.Filter.Type.TYPE_GROUPTYPE:
+            if group_type is None:
+                raise ValueError("group_type must be provided for TYPE_GROUPTYPE filter")
+            group_type_value = cs3igr.GroupType.Value(group_type.upper())
+            return cs3ig.Filter(type=filter_type_value, grouptype=group_type_value)
+        else:
+            raise ValueError(f"Unsupported filter type: {filter_type}")

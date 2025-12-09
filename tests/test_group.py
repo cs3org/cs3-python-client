@@ -13,6 +13,9 @@ from unittest.mock import Mock, patch
 import cs3.rpc.v1beta1.code_pb2 as cs3code
 import cs3.identity.group.v1beta1.group_api_pb2 as cs3ig
 import cs3.identity.group.v1beta1.resources_pb2 as cs3igr
+from cs3client.group import Group
+
+
 
 from cs3client.exceptions import (
     AuthenticationException,
@@ -193,3 +196,94 @@ def test_get_group_by_claim(
         else:
             result = group_instance.get_group_by_claim(auth_token, claim, value)
             assert result == group_data
+
+
+@pytest.mark.parametrize(
+    "filter_type, query, group_type, expected_exception",
+    [
+        ("TYPE_QUERY", "test_group", None, None),
+        ("TYPE_GROUPTYPE", None, "GROUP_TYPE_FEDERATED", None),
+        ("TYPE_GROUPTYPE", None, "GROUP_TYPE_REGULAR", None),
+        ("TYPE_GROUPTYPE", None, None, ValueError),
+        ("TYPE_INVALID", "test", None, ValueError),
+    ],
+)
+def test_create_find_group_filter(filter_type, query, group_type, expected_exception):
+    """Test the create_find_group_filter classmethod."""
+
+    if expected_exception:
+        with pytest.raises(expected_exception):
+            Group.create_find_group_filter(filter_type, query, group_type)
+    else:
+        result = Group.create_find_group_filter(filter_type, query, group_type)
+        assert result is not None
+        assert isinstance(result, cs3ig.Filter)
+
+
+@pytest.mark.parametrize(
+    "status_code, status_message, expected_exception, groups, filter_type, query, group_type",
+    [
+        (cs3code.CODE_OK, None, None, [Mock(), Mock()], "TYPE_QUERY", "test_group", None),
+        (cs3code.CODE_OK, None, None, [Mock()], "TYPE_GROUPTYPE", None, "GROUP_TYPE_FEDERATED"),
+        (cs3code.CODE_OK, None, None, [Mock()], "TYPE_GROUPTYPE", None, "GROUP_TYPE_REGULAR"),
+        (cs3code.CODE_NOT_FOUND, "error", NotFoundException, None, "TYPE_QUERY", "nonexistent", None),
+        (cs3code.CODE_UNAUTHENTICATED, "error", AuthenticationException, None, "TYPE_QUERY", "test", None),
+        (-2, "error", UnknownException, None, "TYPE_GROUPTYPE", None, "GROUP_TYPE_REGULAR"),
+    ],
+)
+def test_find_groups_with_filter_creation(
+    group_instance, status_code, status_message, expected_exception, groups, filter_type, query, group_type  # noqa: F811 (not a redefinition)
+):
+    """Test find_groups using the create_find_group_filter classmethod."""
+
+    # Create filter using the classmethod
+    group_filter = Group.create_find_group_filter(filter_type, query, group_type)
+    filters = [group_filter]
+
+    mock_response = Mock()
+    mock_response.status.code = status_code
+    mock_response.status.message = status_message
+    mock_response.groups = groups
+    auth_token = ('x-access-token', "some_token")
+
+    with patch.object(group_instance._gateway, "FindGroups", return_value=mock_response):
+        if expected_exception:
+            with pytest.raises(expected_exception):
+                group_instance.find_groups(auth_token, filters)
+        else:
+            result = group_instance.find_groups(auth_token, filters)
+            assert result == groups
+
+
+@pytest.mark.parametrize(
+    "status_code, status_message, expected_exception, groups",
+    [
+        (cs3code.CODE_OK, None, None, [Mock(), Mock()]),
+        (cs3code.CODE_NOT_FOUND, "error", NotFoundException, None),
+        (cs3code.CODE_UNAUTHENTICATED, "error", AuthenticationException, None),
+        (-2, "error", UnknownException, None),
+    ],
+)
+def test_find_groups_with_multiple_filters(
+    group_instance, status_code, status_message, expected_exception, groups  # noqa: F811 (not a redefinition)
+):
+    """Test find_groups with multiple filters using the create_find_group_filter classmethod."""
+
+    # Create multiple filters using the classmethod
+    filter1 = Group.create_find_group_filter("TYPE_QUERY", "test", None)
+    filter2 = Group.create_find_group_filter("TYPE_GROUPTYPE", None, "GROUP_TYPE_FEDERATED")
+    filters = [filter1, filter2]
+
+    mock_response = Mock()
+    mock_response.status.code = status_code
+    mock_response.status.message = status_message
+    mock_response.groups = groups
+    auth_token = ('x-access-token', "some_token")
+
+    with patch.object(group_instance._gateway, "FindGroups", return_value=mock_response):
+        if expected_exception:
+            with pytest.raises(expected_exception):
+                group_instance.find_groups(auth_token, filters)
+        else:
+            result = group_instance.find_groups(auth_token, filters)
+            assert result == groups
