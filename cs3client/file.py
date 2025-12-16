@@ -77,21 +77,11 @@ class File:
         def wrapper(self, *args, **kwargs):
             try:
                 return func(self, *args, **kwargs)
-
             # Transport / gRPC-layer failures (no CS3 rpc.Status came back)
             except grpc.RpcError as e:
-                # Log gRPC-layer info
-                self._log.error(
-                    f"gRPC-layer error in {func.__name__}: code={getattr(e,'code',lambda:None)()} "
-                    f"details={getattr(e,'details',lambda:None)()}"
-                )
                 status = _grpc_exc_to_cs3_status(e)
                 # Reuse existing mapping
                 self._status_code_handler.handle_errors(status, operation=func.__name__)
-                raise  # fallback: should not be reached if handle_errors always raises
-            except Exception as e:
-                self._log.error(f"Client error in {func.__name__}: {e}")
-                raise 
 
         return wrapper
 
