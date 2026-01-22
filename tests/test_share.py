@@ -276,8 +276,6 @@ def test_update_received_share(
     share_instance, status_code, status_message, expected_exception, expected_result  # noqa: F811 (not a redefinition)
 ):
     resource_id = cs3spr.ResourceId(storage_id="storage_id", opaque_id="opaque_id")
-    share = cs3scr.Share(resource_id=resource_id)
-    received_share = cs3scr.ReceivedShare(share=share)
 
     mock_response = Mock()
     mock_response.status.code = status_code
@@ -289,9 +287,9 @@ def test_update_received_share(
     with patch.object(share_instance._gateway, "UpdateReceivedShare", return_value=mock_response):
         if expected_exception:
             with pytest.raises(expected_exception):
-                share_instance.update_received_share(auth_token, received_share=received_share)
+                share_instance.update_received_share(auth_token, opaque_id=resource_id.opaque_id, state="SHARE_STATE_ACCEPTED")
         else:
-            result = share_instance.update_received_share(auth_token, received_share=received_share)
+            result = share_instance.update_received_share(auth_token, opaque_id=resource_id.opaque_id, state="SHARE_STATE_ACCEPTED")
             assert result == expected_result
 
 
