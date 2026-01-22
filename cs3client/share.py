@@ -275,37 +275,35 @@ class Share:
         return res.share
 
     def update_received_share(
-        self, auth_token: tuple, received_share: cs3scr.ReceivedShare, state: str = "SHARE_STATE_ACCEPTED"
+        self, auth_token: tuple, opaque_id: str, state: str = "SHARE_STATE_ACCEPTED"
     ) -> cs3scr.ReceivedShare:
         """
         Update the state of a received share (SHARE_STATE_ACCEPTED, SHARE_STATE_ACCEPTED, SHARE_STATE_REJECTED).
 
         :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
-        :param recieved_share: ReceivedShare object.
+        :param opaque_id: Opaque share id. (REQUIRED).
         :param state: Share state to update to, defaults to SHARE_STATE_ACCEPTED, (REQUIRED).
         :return: Updated ReceivedShare object.
         :raises: NotFoundException (Share not found)
         :raises: AuthenticationException (Operation not permitted)
         :raises: UnknownException (Unknown error)
         """
-        resource = Resource(
-            opaque_id=received_share.share.resource_id.opaque_id,
-            storage_id=received_share.share.resource_id.storage_id,
-        )
         req = cs3scapi.UpdateReceivedShareRequest(
             share=cs3scr.ReceivedShare(
-                share=received_share.share,
+                share=cs3scr.Share(
+                    id=cs3scr.ShareId(opaque_id=opaque_id),
+                ),
                 state=cs3scr.ShareState.Value(state),
-                mount_point=resource.ref,
             ),
             update_mask=field_masks.FieldMask(paths=["state"]),
         )
+
         res = self._gateway.UpdateReceivedShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
-            res.status, "update received share", f'opaque_id="{received_share.share.id.opaque_id}"'
+            res.status, "update received share", f'opaque_id="{opaque_id}"'
         )
         self._log.debug(
-            f'msg="Invoked UpdateReceivedShare" opaque_id="{received_share.share.id.opaque_id}" new_state="{state}" '
+            f'msg="Invoked UpdateReceivedShare" opaque_id="{opaque_id}" new_state="{state}" '
             f'trace="{res.status.trace}"'
         )
         return res.share
