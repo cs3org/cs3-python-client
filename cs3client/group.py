@@ -131,7 +131,8 @@ class Group:
         Create a filter for finding groups.
 
         :param filter_type: The type of filter to create. Supported types: TYPE_GROUPTYPE, TYPE_QUERY.
-        :param query: The query string for TYPE_QUERY filter, or GROUP_TYPE_FEDERATED/GROUP_TYPE_REGULAR for TYPE_GROUPTYPE.
+        :param query: The query string for TYPE_QUERY filter.
+        :param group_type: The group type for the TYPE_GROUPTYPE filter, GROUP_TYPE_FEDERATED or GROUP_TYPE_REGULAR.
         :return: A filter object.
         :raises: ValueError (Unsupported filter type)
         """
