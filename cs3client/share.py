@@ -222,7 +222,6 @@ class Share:
     ) -> list:
         """
         List received existing shares.
-        NOTE: Filters for received shares are not yet implemented (14/08/2024)
 
         :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
         :param filter: Filter object to filter the shares, see create_share_filter.
@@ -494,6 +493,9 @@ class Share:
         :param token: Share token (SEMI-OPTIONAL).
         :param opaque_id: Opaque share id (SEMI-OPTIONAL).
         :return: None
+        :raises: NotFoundException (Share not found)
+        :raises: AuthenticationException (Operation not permitted)
+        :raises: UnknownException (Unknown error)
         :raises: ValueError if token or opaque_id is not provided.
         """
         ref = None
