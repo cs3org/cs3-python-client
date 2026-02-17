@@ -76,7 +76,7 @@ class Auth:
 
         if not self._client_secret:
             self._log.error("Attempted to authenticate, client secret was not set")
-            raise SecretNotSetException("The client secret (e.g. token, passowrd) is not set")
+            raise SecretNotSetException("The client secret (e.g. token, password) is not set")
 
         try:
             self.check_token(self._token)
