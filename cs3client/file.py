@@ -690,3 +690,21 @@ class File:
         self._status_code_handler.handle_errors(res.status, "unlock", resource.get_file_ref_str())
         self._log.debug(f'msg="Invoked Unlock" {resource.get_file_ref_str()} result="{res.status.trace}" '
                         f'value="{lock_id}"')
+        
+    @handle_grpc_error
+    def get_quota(self, auth_token: tuple, resource: Resource):
+        """
+        Get the quota for a given path
+        :param auth_token: tuple in the form ('x-access-token', <token>) (see auth.get_token/auth.check_token)
+        :param resource: Resource to get the quota for.
+        :return: The quota for the given resource.
+        :raises: NotFoundException (File not found)
+        :raises: AuthenticationException (Authentication Failed)
+        :raises: UnknownException (Unknown Error)
+        """
+
+        get_quota_request = cs3spr.GetQuotaRequest(ref=resource.ref)
+        res = self._gateway.GetQuota(request=get_quota_request, metadata=[auth_token])
+        self._status_code_handler.handle_errors(res.status, "get quota", resource.get_file_ref_str())
+        self._log.debug(f'msg="Invoked GetQuota" trace="{res.status.trace}"')
+        return res
