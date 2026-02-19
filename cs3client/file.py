@@ -703,7 +703,7 @@ class File:
         :raises: UnknownException (Unknown Error)
         """
 
-        get_quota_request = cs3spr.GetQuotaRequest(ref=resource.ref)
+        get_quota_request = cs3sp.GetQuotaRequest(ref=resource.ref)
         res = self._gateway.GetQuota(request=get_quota_request, metadata=[auth_token])
         self._status_code_handler.handle_errors(res.status, "get quota", resource.get_file_ref_str())
         self._log.debug(f'msg="Invoked GetQuota" trace="{res.status.trace}"')
