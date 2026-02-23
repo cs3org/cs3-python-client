@@ -19,6 +19,7 @@ from .statuscodehandler import StatusCodeHandler
 from .app import App
 from .checkpoint import Checkpoint
 from .config import Config
+from .space import Space
 
 
 class CS3Client:
@@ -54,6 +55,7 @@ class CS3Client:
             self._config, self._log, self._gateway, self._status_code_handler
         )
         self.share = Share(self._config, self._log, self._gateway, self._status_code_handler)
+        self.space = Space(self._config, self._log, self._gateway, self._status_code_handler)
 
     def _create_channel(self) -> grpc.Channel:
         """
