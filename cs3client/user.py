@@ -41,18 +41,22 @@ class User:
         self._config: Config = config
         self._status_code_handler: StatusCodeHandler = status_code_handler
 
-    def get_user(self, idp, opaque_id) -> cs3iur.User:
+    def get_user(self, idp, opaque_id, user_type) -> cs3iur.User:
         """
         Get the user information provided the idp and opaque_id.
 
         :param idp: Identity provider.
         :param opaque_id: Opaque user id.
+        :param user_type: User type. Supported types: USER_TYPE_PRIMARY, USER_TYPE_SECONDARY,
+                                                      USER_TYPE_SERVICE, USER_TYPE_GUEST, USER_TYPE_FEDERATED,
+                                                      USER_TYPE_LIGHTWEIGHT, USER_TYPE_SPACE_OWNER.
         :return: User information.
         :raises: return NotFoundException (User not found)
         :raises: AuthenticationException (Operation not permitted)
         :raises: UnknownException (Unknown error)
         """
-        req = cs3iu.GetUserRequest(user_id=cs3iur.UserId(idp=idp, opaque_id=opaque_id), skip_fetching_user_groups=True)
+        user_type = cs3iur.UserType.Value(user_type.upper())
+        req = cs3iu.GetUserRequest(user_id=cs3iur.UserId(idp=idp, opaque_id=opaque_id), user_type=user_type, skip_fetching_user_groups=True)
         res = self._gateway.GetUser(request=req)
         self._status_code_handler.handle_errors(res.status, "get user", f'opaque_id="{opaque_id}"')
         self._log.debug(f'msg="Invoked GetUser" opaque_id="{res.user.id.opaque_id}" trace="{res.status.trace}"')
