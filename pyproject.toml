@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cs3client"
+description = "CS3 client for Python"
+version = "1.8.0"
+authors = [
+    { name = "Rasmus Welander" },
+    { name = "Diogo Castro" },
+    { name = "Giuseppe Lo Presti" },
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "grpcio>=1.47.0",
+    "grpcio-tools>=1.47.0",
+    "pyOpenSSL",
+    "requests",
+    "cs3apis>=0.1.dev101",
+    "PyJWT",
+    "protobuf",
+    "cryptography",
+]
+
+[project.urls]
+Homepage = "https://github.com/cs3org/cs3-python-client"
+GitHub = "https://github.com/cs3org/cs3-python-client"
+
+[dependency-groups]
+dev = ["sphinx"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["cs3client"]
