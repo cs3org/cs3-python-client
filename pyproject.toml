@@ -34,7 +34,7 @@ Homepage = "https://github.com/cs3org/cs3-python-client"
 GitHub = "https://github.com/cs3org/cs3-python-client"
 
 [dependency-groups]
-dev = ["sphinx"]
+dev = ["pytest", "sphinx"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["cs3client"]
