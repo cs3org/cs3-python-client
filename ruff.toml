@@ -1,0 +1,5 @@
+# Pin the rule set so that new ruff releases don't start failing CI with new default rules.
+line-length = 130
+
+[lint]
+select = ["E4", "E7", "E9", "F"]
