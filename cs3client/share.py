@@ -57,7 +57,8 @@ class Share:
         opaque_id: str,
         idp: str,
         role: str,
-        grantee_type: str
+        grantee_type: str,
+        user_type: Optional[str] = None
     ) -> cs3scr.Share:
         """
         Create a share for a resource to the user/group with the specified role, using their opaque id and idp.
@@ -68,6 +69,8 @@ class Share:
         :param idp: Identity provider, (REQUIRED).
         :param role: Role to assign to the grantee, VIEWER or EDITOR (REQUIRED).
         :param grantee_type: Type of grantee, USER or GROUP (REQUIRED).
+        :param user_type: Type of the user grantee, as in the user id, e.g. USER_TYPE_PRIMARY or
+            USER_TYPE_LIGHTWEIGHT. The storage needs it to share with lightweight and federated users (OPTIONAL).
         :return: Share object.
         :raises: NotFoundException (Resource not found)
         :raises: AuthenticationException (Operation not permitted)
@@ -76,7 +79,7 @@ class Share:
         :raises: UnknownException (Unknown error)
         :raises: ValueError (Invalid values)
         """
-        share_grant = Share._create_share_grant(opaque_id, idp, role, grantee_type)
+        share_grant = Share._create_share_grant(opaque_id, idp, role, grantee_type, user_type=user_type)
         req = cs3scapi.CreateShareRequest(resource_info=resource_info, grant=share_grant)
         res = self._gateway.CreateShare(request=req, metadata=[auth_token])
         self._status_code_handler.handle_errors(
@@ -569,7 +572,8 @@ class Share:
 
     @classmethod
     def _create_share_grant(
-        cls, opaque_id: str, idp: str, role: str, grantee_type: str, expiration: Optional[cs3types.Timestamp] = None
+        cls, opaque_id: str, idp: str, role: str, grantee_type: str, expiration: Optional[cs3types.Timestamp] = None,
+        user_type: Optional[str] = None
     ) -> cs3scr.ShareGrant:
         """
         Create a share grant object.
@@ -578,14 +582,17 @@ class Share:
         :param idp: Identity provider.
         :param role: Role to assign to the grantee, VIEWER or EDITOR.
         :param grantee_type: Type of grantee, USER or GROUP.
+        :param user_type: Type of the user grantee, e.g. USER_TYPE_PRIMARY. Ignored for groups.
         :return: ShareGrant object.
-        :raises: ValueError (Invalid grantee type)
+        :raises: ValueError (Invalid grantee type or user type)
         """
 
         grantee = None
         if grantee_type == "USER":
             type = cs3spr.GRANTEE_TYPE_USER
             user_id = cs3iur.UserId(idp=idp, opaque_id=opaque_id)
+            if user_type:
+                user_id.type = cs3iur.UserType.Value(user_type.upper())
             grantee = cs3spr.Grantee(type=type, user_id=user_id)
         elif grantee_type == "GROUP":
             type = cs3spr.GRANTEE_TYPE_GROUP

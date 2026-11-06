@@ -13,6 +13,7 @@ from unittest.mock import Mock, patch
 import cs3.sharing.collaboration.v1beta1.resources_pb2 as cs3scr
 import cs3.sharing.link.v1beta1.link_api_pb2 as cs3slapi
 import cs3.storage.provider.v1beta1.resources_pb2 as cs3spr
+import cs3.identity.user.v1beta1.resources_pb2 as cs3iur
 import cs3.rpc.v1beta1.code_pb2 as cs3code
 
 from cs3client.exceptions import (
@@ -82,6 +83,33 @@ def test_create_share(
                 grantee_type=grantee_type
             )
             assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "user_type, expected_type",
+    [
+        ("USER_TYPE_LIGHTWEIGHT", cs3iur.UserType.USER_TYPE_LIGHTWEIGHT),
+        (None, cs3iur.UserType.USER_TYPE_INVALID),
+    ],
+)
+def test_create_share_user_type(share_instance, user_type, expected_type):  # noqa: F811 (not a redefinition)
+    resource_info = cs3spr.ResourceInfo(id=cs3spr.ResourceId(storage_id="storage_id", opaque_id="opaque_id"))
+    mock_response = Mock()
+    mock_response.status.code = cs3code.CODE_OK
+    auth_token = ('x-access-token', "some_token")
+
+    with patch.object(share_instance._gateway, "CreateShare", return_value=mock_response) as mock_create:
+        share_instance.create_share(
+            auth_token,
+            resource_info=resource_info,
+            opaque_id="opaque_id",
+            idp="idp",
+            role="VIEWER",
+            grantee_type="USER",
+            user_type=user_type
+        )
+
+    assert mock_create.call_args.kwargs["request"].grant.grantee.user_id.type == expected_type
 
 
 @pytest.mark.parametrize(
